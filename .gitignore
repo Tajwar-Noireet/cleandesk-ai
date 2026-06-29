@@ -1,0 +1,25 @@
+# Ignore dependency folders
+node_modules/
+dist/
+build/
+venv/
+.venv/
+env/
+__pycache__/
+
+# Ignore Environment Variables (extremely important)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+
+# Ignore logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# Ignore OS metadata
+.DS_Store
+Thumbs.db
