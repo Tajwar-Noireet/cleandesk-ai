@@ -4,24 +4,35 @@ const { isSupabaseConfigured, supabase } = require('../lib/supabaseClient');
 
 // Helper to get or create conversation
 const getOrCreateConversation = async (conversationId, businessId, customerName = 'Anonymous Customer') => {
-  // TODO: Add Supabase get/create conversation logic in Phase 3
-  
   if (isSupabaseConfigured()) {
-    if (conversationId) {
-      const { data } = await supabase
+    try {
+      if (conversationId) {
+        const { data, error } = await supabase
+          .from('conversations')
+          .select('*')
+          .eq('id', conversationId);
+        
+        if (error) {
+          console.error(`❌ Supabase error checking conversation ID ${conversationId}:`, error.message);
+        } else if (data && data.length > 0) {
+          return data[0];
+        }
+      }
+
+      // Insert new conversation if not found or no ID provided
+      const { data, error } = await supabase
         .from('conversations')
-        .select('*')
-        .eq('id', conversationId)
-        .single();
-      if (data) return data;
+        .insert([{ business_id: businessId, customer_name: customerName }])
+        .select();
+
+      if (error) {
+        console.error('❌ Supabase error inserting conversation:', error.message);
+        throw error;
+      }
+      return data[0];
+    } catch (err) {
+      console.error('⚠️ Supabase getOrCreateConversation failed. Falling back to Mock Store:', err.message);
     }
-    const { data, error } = await supabase
-      .from('conversations')
-      .insert([{ business_id: businessId, customer_name: customerName }])
-      .select()
-      .single();
-    if (error) throw error;
-    return data;
   }
 
   // Mock Store implementation
@@ -49,15 +60,22 @@ const getOrCreateConversation = async (conversationId, businessId, customerName 
 
 // Helper to get current lead state for a conversation
 const getCurrentLeadState = async (conversationId, businessId) => {
-  // TODO: Add Supabase query for lead associated with conversation
-  
   if (isSupabaseConfigured()) {
-    const { data } = await supabase
-      .from('leads')
-      .select('*')
-      .eq('conversation_id', conversationId)
-      .single();
-    return data || null;
+    try {
+      // Avoid .single() here because 0 rows is normal for a conversation without a lead
+      const { data, error } = await supabase
+        .from('leads')
+        .select('*')
+        .eq('conversation_id', conversationId);
+      
+      if (error) {
+        console.error(`❌ Supabase error retrieving lead state for conversation ${conversationId}:`, error.message);
+        return null;
+      }
+      return data && data.length > 0 ? data[0] : null;
+    } catch (err) {
+      console.error('⚠️ Supabase getCurrentLeadState failed. Falling back to Mock Store:', err.message);
+    }
   }
 
   // Mock Store implementation
@@ -67,16 +85,21 @@ const getCurrentLeadState = async (conversationId, businessId) => {
 
 // Helper to save a message
 const saveMessage = async (conversationId, sender, content) => {
-  // TODO: Add Supabase insert message query in Phase 3
-  
   if (isSupabaseConfigured()) {
-    const { data, error } = await supabase
-      .from('messages')
-      .insert([{ conversation_id: conversationId, sender, content }])
-      .select()
-      .single();
-    if (error) throw error;
-    return data;
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .insert([{ conversation_id: conversationId, sender, content }])
+        .select();
+
+      if (error) {
+        console.error(`❌ Supabase error saving message for conversation ${conversationId}:`, error.message);
+        throw error;
+      }
+      return data[0];
+    } catch (err) {
+      console.error('⚠️ Supabase saveMessage failed. Falling back to Mock Store:', err.message);
+    }
   }
 
   // Mock Store implementation
@@ -93,17 +116,23 @@ const saveMessage = async (conversationId, sender, content) => {
 
 // Helper to update conversation metadata
 const updateConversationMeta = async (conversationId, aiConfidence, needsHumanReview, customerPhone) => {
-  // TODO: Add Supabase update conversation query in Phase 3
-  
   if (isSupabaseConfigured()) {
-    const updates = { ai_confidence: aiConfidence, needs_human_review: needsHumanReview };
-    if (customerPhone) updates.customer_phone = customerPhone;
-    
-    await supabase
-      .from('conversations')
-      .update(updates)
-      .eq('id', conversationId);
-    return;
+    try {
+      const updates = { ai_confidence: aiConfidence, needs_human_review: needsHumanReview };
+      if (customerPhone) updates.customer_phone = customerPhone;
+      
+      const { error } = await supabase
+        .from('conversations')
+        .update(updates)
+        .eq('id', conversationId);
+
+      if (error) {
+        console.error(`❌ Supabase error updating metadata for conversation ${conversationId}:`, error.message);
+      }
+      return;
+    } catch (err) {
+      console.error('⚠️ Supabase updateConversationMeta failed. Falling back to Mock Store:', err.message);
+    }
   }
 
   // Mock Store implementation
@@ -124,37 +153,62 @@ const saveOrUpdateLead = async (businessId, conversationId, detectedFields) => {
     return 'in_progress';
   }
 
-  // TODO: Add Supabase upsert lead query in Phase 3
-  
   if (isSupabaseConfigured()) {
-    const { data: existingLead } = await supabase
-      .from('leads')
-      .select('id')
-      .eq('conversation_id', conversationId)
-      .single();
-
-    const leadPayload = {
-      business_id: businessId,
-      conversation_id: conversationId,
-      customer_name: detectedFields.customer_name,
-      customer_phone: detectedFields.customer_phone,
-      address: detectedFields.address,
-      service_type: detectedFields.service_type,
-      preferred_date: detectedFields.preferred_date,
-      notes: detectedFields.notes
-    };
-
-    if (existingLead) {
-      await supabase
+    try {
+      // Avoid .single() because 0 rows (no lead exists yet) is normal
+      const { data: existingLead, error: selectErr } = await supabase
         .from('leads')
-        .update(leadPayload)
-        .eq('id', existingLead.id);
-    } else {
-      await supabase
-        .from('leads')
-        .insert([leadPayload]);
+        .select('id')
+        .eq('conversation_id', conversationId);
+
+      if (selectErr) {
+        console.error('❌ Supabase error checking existing lead:', selectErr.message);
+      }
+
+      const leadPayload = {
+        business_id: businessId,
+        conversation_id: conversationId,
+        customer_name: detectedFields.customer_name,
+        customer_phone: detectedFields.customer_phone,
+        address: detectedFields.address,
+        service_type: detectedFields.service_type,
+        preferred_date: detectedFields.preferred_date,
+        notes: detectedFields.notes
+      };
+
+      if (existingLead && existingLead.length > 0) {
+        const { error: updateErr } = await supabase
+          .from('leads')
+          .update(leadPayload)
+          .eq('id', existingLead[0].id);
+        
+        if (updateErr) {
+          console.error(`❌ Supabase error updating lead ${existingLead[0].id}:`, updateErr.message);
+          throw updateErr;
+        }
+      } else {
+        const { error: insertErr } = await supabase
+          .from('leads')
+          .insert([leadPayload]);
+        
+        if (insertErr) {
+          console.error('❌ Supabase error inserting new lead:', insertErr.message);
+          throw insertErr;
+        }
+      }
+
+      // If name has changed, update conversation customer_name
+      if (detectedFields.customer_name) {
+        await supabase
+          .from('conversations')
+          .update({ customer_name: detectedFields.customer_name })
+          .eq('id', conversationId);
+      }
+
+      return 'captured';
+    } catch (err) {
+      console.error('⚠️ Supabase saveOrUpdateLead failed. Falling back to Mock Store:', err.message);
     }
-    return 'captured';
   }
 
   // Mock Store implementation
@@ -209,14 +263,42 @@ exports.handleMessage = async (req, res) => {
     await saveMessage(conversation.id, 'customer', message);
 
     // 3. Load business knowledge base
-    let businessProfile, services, faqs;
+    let businessProfile = {};
+    let services = [];
+    let faqs = [];
+
     if (isSupabaseConfigured()) {
-      const { data: b } = await supabase.from('businesses').select('*').eq('id', businessId).single();
-      const { data: s } = await supabase.from('services').select('*').eq('business_id', businessId);
-      const { data: f } = await supabase.from('faqs').select('*').eq('business_id', businessId);
-      businessProfile = b;
-      services = s || [];
-      faqs = f || [];
+      try {
+        const { data: b, error: bErr } = await supabase
+          .from('businesses')
+          .select('*')
+          .eq('id', businessId);
+        
+        if (bErr || !b || b.length === 0) {
+          throw new Error(bErr ? bErr.message : `Business with ID ${businessId} not found`);
+        }
+        businessProfile = b[0];
+
+        const { data: s, error: sErr } = await supabase
+          .from('services')
+          .select('*')
+          .eq('business_id', businessId);
+        if (sErr) console.error('❌ Supabase error loading services:', sErr.message);
+        else services = s || [];
+
+        const { data: f, error: fErr } = await supabase
+          .from('faqs')
+          .select('*')
+          .eq('business_id', businessId);
+        if (fErr) console.error('❌ Supabase error loading FAQs:', fErr.message);
+        else faqs = f || [];
+
+      } catch (err) {
+        console.error('⚠️ Supabase knowledge load failed. Falling back to Mock Store values:', err.message);
+        businessProfile = mockStore.businesses.find(b => b.id === businessId) || {};
+        services = mockStore.services.filter(s => s.business_id === businessId);
+        faqs = mockStore.faqs.filter(f => f.business_id === businessId);
+      }
     } else {
       businessProfile = mockStore.businesses.find(b => b.id === businessId) || {};
       services = mockStore.services.filter(s => s.business_id === businessId);
@@ -233,7 +315,7 @@ exports.handleMessage = async (req, res) => {
     try {
       const response = await axios.post(`${aiServiceUrl}/generate-response`, {
         message,
-        history: [], // We could pass conversation history if needed
+        history: [], 
         business_profile: businessProfile,
         services,
         faqs,

@@ -5,18 +5,20 @@ const { isSupabaseConfigured, supabase } = require('../lib/supabaseClient');
 exports.getServicesByBusiness = async (req, res) => {
   const { businessId } = req.params;
 
-  // TODO: Add Supabase select query here in Phase 3
-
   if (isSupabaseConfigured()) {
     try {
       const { data, error } = await supabase
         .from('services')
         .select('*')
         .eq('business_id', businessId);
-      if (error) throw error;
-      return res.json(data);
+      
+      if (error) {
+        console.error(`❌ Supabase error loading services for business ${businessId}:`, error.message);
+        throw error;
+      }
+      return res.json(data || []);
     } catch (err) {
-      return res.status(500).json({ error: err.message });
+      return res.status(500).json({ error: `Supabase load services failed: ${err.message}` });
     }
   }
 
@@ -29,19 +31,20 @@ exports.getServicesByBusiness = async (req, res) => {
 exports.createService = async (req, res) => {
   const { business_id, name, description, base_price, estimated_duration } = req.body;
 
-  // TODO: Add Supabase insert query here in Phase 3
-
   if (isSupabaseConfigured()) {
     try {
       const { data, error } = await supabase
         .from('services')
         .insert([{ business_id, name, description, base_price, estimated_duration }])
-        .select()
-        .single();
-      if (error) throw error;
-      return res.status(201).json(data);
+        .select();
+
+      if (error) {
+        console.error('❌ Supabase error inserting service:', error.message);
+        throw error;
+      }
+      return res.status(201).json(data[0]);
     } catch (err) {
-      return res.status(500).json({ error: err.message });
+      return res.status(500).json({ error: `Supabase create service failed: ${err.message}` });
     }
   }
 
@@ -63,20 +66,26 @@ exports.updateService = async (req, res) => {
   const { id } = req.params;
   const { name, description, base_price, estimated_duration } = req.body;
 
-  // TODO: Add Supabase update query here in Phase 3
-
   if (isSupabaseConfigured()) {
     try {
       const { data, error } = await supabase
         .from('services')
         .update({ name, description, base_price, estimated_duration })
         .eq('id', id)
-        .select()
-        .single();
-      if (error) throw error;
-      return res.json(data);
+        .select();
+
+      if (error) {
+        console.error(`❌ Supabase error updating service ${id}:`, error.message);
+        throw error;
+      }
+
+      if (data && data.length > 0) {
+        return res.json(data[0]);
+      } else {
+        return res.status(404).json({ error: 'Service not found to update' });
+      }
     } catch (err) {
-      return res.status(500).json({ error: err.message });
+      return res.status(500).json({ error: `Supabase update service failed: ${err.message}` });
     }
   }
 
@@ -102,18 +111,20 @@ exports.updateService = async (req, res) => {
 exports.deleteService = async (req, res) => {
   const { id } = req.params;
 
-  // TODO: Add Supabase delete query here in Phase 3
-
   if (isSupabaseConfigured()) {
     try {
       const { error } = await supabase
         .from('services')
         .delete()
         .eq('id', id);
-      if (error) throw error;
+      
+      if (error) {
+        console.error(`❌ Supabase error deleting service ${id}:`, error.message);
+        throw error;
+      }
       return res.json({ success: true, message: 'Service deleted successfully' });
     } catch (err) {
-      return res.status(500).json({ error: err.message });
+      return res.status(500).json({ error: `Supabase delete service failed: ${err.message}` });
     }
   }
 

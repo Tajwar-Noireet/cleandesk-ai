@@ -12,12 +12,20 @@ if (supabaseUrl && supabaseServiceRoleKey &&
     supabaseServiceRoleKey !== 'your_supabase_service_role_key') {
   try {
     supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
-    console.log('Supabase client successfully initialized.');
+    console.log('==================================================');
+    console.log('🚀 DATABASE STATE: Live Supabase Database Mode Active');
+    console.log('==================================================');
   } catch (error) {
-    console.error('Error initializing Supabase client:', error.message);
+    console.error('==================================================');
+    console.error('❌ ERROR: Failed to initialize Supabase client:', error.message);
+    console.error('⚠️ Falling back to Offline Mock Mode.');
+    console.error('==================================================');
   }
 } else {
-  console.log('Supabase credentials not configured yet. Running in Mock Data mode.');
+  console.log('==================================================');
+  console.log('⚠️ DATABASE STATE: Running in Offline Mock Mode');
+  console.log('   (Using memory-persistent mockStore fallback)');
+  console.log('==================================================');
 }
 
 /**

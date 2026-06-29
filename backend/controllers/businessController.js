@@ -5,27 +5,33 @@ const { isSupabaseConfigured, supabase } = require('../lib/supabaseClient');
 exports.getBusiness = async (req, res) => {
   const { id } = req.params;
   
-  // TODO: Add Supabase select query here in Phase 3
-  // const { data, error } = await supabase.from('businesses').select('*').eq('id', id).single();
-  
   if (isSupabaseConfigured()) {
     try {
+      // Use multi-row select to avoid PGRST116 single-row empty warnings
       const { data, error } = await supabase
         .from('businesses')
         .select('*')
-        .eq('id', id)
-        .single();
-      if (error) throw error;
-      return res.json(data);
+        .eq('id', id);
+      
+      if (error) {
+        console.error(`❌ Supabase error loading business ${id}:`, error.message);
+        throw error;
+      }
+      
+      if (data && data.length > 0) {
+        return res.json(data[0]);
+      } else {
+        return res.status(404).json({ error: 'Business not found in Supabase' });
+      }
     } catch (err) {
-      return res.status(404).json({ error: 'Business not found in Supabase' });
+      return res.status(404).json({ error: 'Business search failed' });
     }
   }
 
   // Fallback to Mock Store
   const business = mockStore.businesses.find(b => b.id === id);
   if (!business) {
-    return res.status(404).json({ error: 'Business not found' });
+    return res.status(404).json({ error: 'Business not found (Mock Store)' });
   }
   res.json(business);
 };
@@ -34,29 +40,30 @@ exports.getBusiness = async (req, res) => {
 exports.createBusiness = async (req, res) => {
   const { name, phone, email, service_area, opening_hours, description } = req.body;
   
-  // TODO: Add Supabase insert query here in Phase 3
-  
   if (isSupabaseConfigured()) {
     try {
       const { data, error } = await supabase
         .from('businesses')
         .insert([{
-          user_id: req.user.id,
+          user_id: req.user ? req.user.id : null,
           name, phone, email, service_area, opening_hours, description
         }])
-        .select()
-        .single();
-      if (error) throw error;
-      return res.status(211).json(data);
+        .select();
+
+      if (error) {
+        console.error('❌ Supabase error creating business:', error.message);
+        throw error;
+      }
+      return res.status(201).json(data[0]);
     } catch (err) {
-      return res.status(500).json({ error: err.message });
+      return res.status(500).json({ error: `Supabase create failed: ${err.message}` });
     }
   }
 
   // Mock Store insertion
   const newBusiness = {
     id: `b-${Date.now()}`,
-    user_id: req.user.id,
+    user_id: req.user ? req.user.id : 'mock-user-123',
     name,
     phone,
     email,
@@ -73,20 +80,26 @@ exports.updateBusiness = async (req, res) => {
   const { id } = req.params;
   const { name, phone, email, service_area, opening_hours, description } = req.body;
 
-  // TODO: Add Supabase update query here in Phase 3
-
   if (isSupabaseConfigured()) {
     try {
       const { data, error } = await supabase
         .from('businesses')
         .update({ name, phone, email, service_area, opening_hours, description })
         .eq('id', id)
-        .select()
-        .single();
-      if (error) throw error;
-      return res.json(data);
+        .select();
+
+      if (error) {
+        console.error(`❌ Supabase error updating business ${id}:`, error.message);
+        throw error;
+      }
+      
+      if (data && data.length > 0) {
+        return res.json(data[0]);
+      } else {
+        return res.status(404).json({ error: 'Business not found to update' });
+      }
     } catch (err) {
-      return res.status(500).json({ error: err.message });
+      return res.status(500).json({ error: `Supabase update failed: ${err.message}` });
     }
   }
 

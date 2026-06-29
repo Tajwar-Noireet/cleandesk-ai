@@ -5,8 +5,6 @@ const { isSupabaseConfigured, supabase } = require('../lib/supabaseClient');
 exports.getConversationsByBusiness = async (req, res) => {
   const { businessId } = req.params;
 
-  // TODO: Add Supabase select query here in Phase 3
-
   if (isSupabaseConfigured()) {
     try {
       const { data, error } = await supabase
@@ -14,10 +12,14 @@ exports.getConversationsByBusiness = async (req, res) => {
         .select('*')
         .eq('business_id', businessId)
         .order('created_at', { ascending: false });
-      if (error) throw error;
-      return res.json(data);
+      
+      if (error) {
+        console.error(`❌ Supabase error loading conversations for business ${businessId}:`, error.message);
+        throw error;
+      }
+      return res.json(data || []);
     } catch (err) {
-      return res.status(500).json({ error: err.message });
+      return res.status(500).json({ error: `Supabase load conversations failed: ${err.message}` });
     }
   }
 
@@ -32,30 +34,42 @@ exports.getConversationsByBusiness = async (req, res) => {
 exports.getConversationDetail = async (req, res) => {
   const { conversationId } = req.params;
 
-  // TODO: Add Supabase query for conversation + join messages here in Phase 3
-
   if (isSupabaseConfigured()) {
     try {
-      const { data: conversation, error: cErr } = await supabase
+      // Avoid .single() here to cleanly handle 404s without PGRST116 warnings in logs
+      const { data: convData, error: cErr } = await supabase
         .from('conversations')
         .select('*')
-        .eq('id', conversationId)
-        .single();
-      if (cErr) throw cErr;
+        .eq('id', conversationId);
+      
+      if (cErr) {
+        console.error(`❌ Supabase error loading conversation details for ${conversationId}:`, cErr.message);
+        throw cErr;
+      }
+
+      if (!convData || convData.length === 0) {
+        return res.status(404).json({ error: 'Conversation not found in Supabase' });
+      }
+
+      const conversation = convData[0];
 
       const { data: messages, error: mErr } = await supabase
         .from('messages')
         .select('*')
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true });
-      if (mErr) throw mErr;
+      
+      if (mErr) {
+        console.error(`❌ Supabase error loading messages for conversation ${conversationId}:`, mErr.message);
+        throw mErr;
+      }
 
       return res.json({
         ...conversation,
-        messages
+        messages: messages || []
       });
     } catch (err) {
-      return res.status(500).json({ error: err.message });
+      return res.status(500).json({ error: `Supabase load conversation details failed: ${err.message}` });
     }
   }
 

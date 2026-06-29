@@ -112,9 +112,4 @@ The AI service manages slot-extraction (name, phone, address, services, and pref
 
 The SQL schema configuration is stored at [docs/schema.sql](file:///c:/Users/tazwa/cleandesk-ai/docs/schema.sql). 
 
-To migrate to a live Supabase PostgreSQL database:
-1. Log into your [Supabase Dashboard](https://supabase.com/).
-2. Create a new project.
-3. Open the **SQL Editor** in Supabase and paste the contents of [schema.sql](file:///c:/Users/tazwa/cleandesk-ai/docs/schema.sql), then click **Run**.
-4. Retrieve your **Project URL** and **Service Role Key** under API settings.
-5. Update your backend `.env` variables (`SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`) and your frontend `.env` variables (`VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`) to transition automatically from Mock Data to Live Database mode.
+For step-by-step instructions on setting up your Supabase project, executing migrations, configuring environment keys, and running tests, please refer to the detailed **[Phase 3 Supabase Integration Guide](file:///c:/Users/tazwa/cleandesk-ai/docs/PHASE_3_SUPABASE.md)**.

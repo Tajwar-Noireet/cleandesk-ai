@@ -5,8 +5,6 @@ const { isSupabaseConfigured, supabase } = require('../lib/supabaseClient');
 exports.getLeadsByBusiness = async (req, res) => {
   const { businessId } = req.params;
 
-  // TODO: Add Supabase select query here in Phase 3
-
   if (isSupabaseConfigured()) {
     try {
       const { data, error } = await supabase
@@ -14,10 +12,14 @@ exports.getLeadsByBusiness = async (req, res) => {
         .select('*')
         .eq('business_id', businessId)
         .order('created_at', { ascending: false });
-      if (error) throw error;
-      return res.json(data);
+      
+      if (error) {
+        console.error(`❌ Supabase error loading leads for business ${businessId}:`, error.message);
+        throw error;
+      }
+      return res.json(data || []);
     } catch (err) {
-      return res.status(500).json({ error: err.message });
+      return res.status(500).json({ error: `Supabase load leads failed: ${err.message}` });
     }
   }
 
@@ -41,8 +43,6 @@ exports.createLead = async (req, res) => {
     notes
   } = req.body;
 
-  // TODO: Add Supabase insert query here in Phase 3
-
   if (isSupabaseConfigured()) {
     try {
       const { data, error } = await supabase
@@ -58,12 +58,15 @@ exports.createLead = async (req, res) => {
           notes,
           status: 'new'
         }])
-        .select()
-        .single();
-      if (error) throw error;
-      return res.status(201).json(data);
+        .select();
+
+      if (error) {
+        console.error('❌ Supabase error inserting lead:', error.message);
+        throw error;
+      }
+      return res.status(201).json(data[0]);
     } catch (err) {
-      return res.status(500).json({ error: err.message });
+      return res.status(500).json({ error: `Supabase create lead failed: ${err.message}` });
     }
   }
 
@@ -94,20 +97,26 @@ exports.updateLeadStatus = async (req, res) => {
     return res.status(400).json({ error: 'Invalid lead status' });
   }
 
-  // TODO: Add Supabase update query here in Phase 3
-
   if (isSupabaseConfigured()) {
     try {
       const { data, error } = await supabase
         .from('leads')
         .update({ status })
         .eq('id', id)
-        .select()
-        .single();
-      if (error) throw error;
-      return res.json(data);
+        .select();
+
+      if (error) {
+        console.error(`❌ Supabase error updating lead status for lead ${id}:`, error.message);
+        throw error;
+      }
+
+      if (data && data.length > 0) {
+        return res.json(data[0]);
+      } else {
+        return res.status(404).json({ error: 'Lead not found to update status' });
+      }
     } catch (err) {
-      return res.status(500).json({ error: err.message });
+      return res.status(500).json({ error: `Supabase update lead status failed: ${err.message}` });
     }
   }
 

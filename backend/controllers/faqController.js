@@ -5,18 +5,20 @@ const { isSupabaseConfigured, supabase } = require('../lib/supabaseClient');
 exports.getFAQsByBusiness = async (req, res) => {
   const { businessId } = req.params;
 
-  // TODO: Add Supabase select query here in Phase 3
-
   if (isSupabaseConfigured()) {
     try {
       const { data, error } = await supabase
         .from('faqs')
         .select('*')
         .eq('business_id', businessId);
-      if (error) throw error;
-      return res.json(data);
+      
+      if (error) {
+        console.error(`❌ Supabase error loading FAQs for business ${businessId}:`, error.message);
+        throw error;
+      }
+      return res.json(data || []);
     } catch (err) {
-      return res.status(500).json({ error: err.message });
+      return res.status(500).json({ error: `Supabase load FAQs failed: ${err.message}` });
     }
   }
 
@@ -29,19 +31,20 @@ exports.getFAQsByBusiness = async (req, res) => {
 exports.createFAQ = async (req, res) => {
   const { business_id, question, answer } = req.body;
 
-  // TODO: Add Supabase insert query here in Phase 3
-
   if (isSupabaseConfigured()) {
     try {
       const { data, error } = await supabase
         .from('faqs')
         .insert([{ business_id, question, answer }])
-        .select()
-        .single();
-      if (error) throw error;
-      return res.status(201).json(data);
+        .select();
+
+      if (error) {
+        console.error('❌ Supabase error inserting FAQ:', error.message);
+        throw error;
+      }
+      return res.status(201).json(data[0]);
     } catch (err) {
-      return res.status(500).json({ error: err.message });
+      return res.status(500).json({ error: `Supabase create FAQ failed: ${err.message}` });
     }
   }
 
@@ -61,20 +64,26 @@ exports.updateFAQ = async (req, res) => {
   const { id } = req.params;
   const { question, answer } = req.body;
 
-  // TODO: Add Supabase update query here in Phase 3
-
   if (isSupabaseConfigured()) {
     try {
       const { data, error } = await supabase
         .from('faqs')
         .update({ question, answer })
         .eq('id', id)
-        .select()
-        .single();
-      if (error) throw error;
-      return res.json(data);
+        .select();
+
+      if (error) {
+        console.error(`❌ Supabase error updating FAQ ${id}:`, error.message);
+        throw error;
+      }
+
+      if (data && data.length > 0) {
+        return res.json(data[0]);
+      } else {
+        return res.status(404).json({ error: 'FAQ not found to update' });
+      }
     } catch (err) {
-      return res.status(500).json({ error: err.message });
+      return res.status(500).json({ error: `Supabase update FAQ failed: ${err.message}` });
     }
   }
 
@@ -98,18 +107,20 @@ exports.updateFAQ = async (req, res) => {
 exports.deleteFAQ = async (req, res) => {
   const { id } = req.params;
 
-  // TODO: Add Supabase delete query here in Phase 3
-
   if (isSupabaseConfigured()) {
     try {
       const { error } = await supabase
         .from('faqs')
         .delete()
         .eq('id', id);
-      if (error) throw error;
+      
+      if (error) {
+        console.error(`❌ Supabase error deleting FAQ ${id}:`, error.message);
+        throw error;
+      }
       return res.json({ success: true, message: 'FAQ deleted successfully' });
     } catch (err) {
-      return res.status(500).json({ error: err.message });
+      return res.status(500).json({ error: `Supabase delete FAQ failed: ${err.message}` });
     }
   }
 
