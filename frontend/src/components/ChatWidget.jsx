@@ -126,7 +126,7 @@ const ChatWidget = ({ businessId, demoMode = false }) => {
                   <span className="dot"></span>
                 </div>
               </div>
-            ))}
+            )}
             <div ref={messagesEndRef} />
           </div>
 
