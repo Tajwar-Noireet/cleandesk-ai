@@ -117,74 +117,39 @@ const Login = () => {
           </Link>
         </div>
 
-        <div className="auth-welcome-message">
-          <h2>Automate customer support for your business.</h2>
-          <p>Deploy a virtual receptionist that answers FAQs, captures booking details, and routes priority issues to your team instantly.</p>
-          
-          <div className="auth-bullets-list">
-            <div className="auth-bullet-item">
-              <span className="auth-bullet-icon">⚡</span>
-              <span>24/7 AI-driven support custom-tailored to your prices and coverage areas</span>
+        {/* Real Product Surface Preview */}
+        <div className="auth-product-preview-container">
+          <div className="auth-preview-card mini-inbox-card animate-float-1">
+            <div className="preview-card-header">
+              <span className="dot pulse orange"></span>
+              <strong>Active Customer Enquiry</strong>
             </div>
-            <div className="auth-bullet-item">
-              <span className="auth-bullet-icon">⚡</span>
-              <span>Structured lead slot extraction and customer status workflows</span>
+            <p className="preview-card-body">"I need an end of tenancy clean for my 2-bed apartment next Wednesday. Do you provide supplies?"</p>
+          </div>
+
+          <div className="auth-preview-card lead-checklist-card animate-float-2">
+            <div className="preview-card-header">
+              <strong>🎯 Automated Capture Checklist</strong>
             </div>
-            <div className="auth-bullet-item">
-              <span className="auth-bullet-icon">⚡</span>
-              <span>Simple embeddable HTML script snippets to deploy onto any website</span>
+            <div className="checklist-items">
+              <span className="check-item-span check-filled">✓ Service: End of Tenancy</span>
+              <span className="check-item-span check-filled">✓ Date: Next Wednesday</span>
+              <span className="check-item-span check-empty">☐ Phone Number (capturing...)</span>
             </div>
+          </div>
+
+          <div className="auth-preview-card booking-outcome-card animate-float-3">
+            <div className="preview-card-header">
+              <span className="dot green"></span>
+              <strong>Operation Outcome</strong>
+            </div>
+            <p className="preview-card-body">Lead qualified & saved. Ticket created in Owner CRM.</p>
           </div>
         </div>
 
-        {/* Abstract AI Node Workflow Graphic */}
-        <div className="auth-vector-container">
-          <svg width="280" height="200" viewBox="0 0 280 200" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ overflow: 'visible' }}>
-            <path d="M40 100 H240" stroke="url(#line-grad-1)" strokeWidth="2" strokeDasharray="4 4" />
-            <path d="M140 30 V170" stroke="url(#line-grad-2)" strokeWidth="1.5" />
-            <path d="M40 100 L140 30 L240 100 L140 170 Z" stroke="url(#line-grad-3)" strokeWidth="1" strokeOpacity="0.4" />
-            
-            {/* Chat Node */}
-            <g transform="translate(15, 75)">
-              <rect width="50" height="50" rx="10" fill="#1e293b" stroke="#334155" strokeWidth="1.5" />
-              <text x="25" y="31" fontSize="18" textAnchor="middle">💬</text>
-              <circle cx="50" cy="0" r="4" fill="#06b6d4" />
-            </g>
-
-            {/* AI Receiver Node */}
-            <g transform="translate(115, 75)">
-              <rect width="50" height="50" rx="25" fill="#1e1b4b" stroke="#8b5cf6" strokeWidth="2" />
-              <text x="25" y="32" fontSize="18" textAnchor="middle">🤖</text>
-              <circle cx="25" cy="25" r="25" stroke="#8b5cf6" strokeOpacity="0.5" strokeWidth="1" />
-            </g>
-
-            {/* Lead CRM Node */}
-            <g transform="translate(215, 75)">
-              <rect width="50" height="50" rx="10" fill="#064e3b" stroke="#059669" strokeWidth="1.5" />
-              <text x="25" y="32" fontSize="18" textAnchor="middle">🎯</text>
-              <circle cx="0" cy="50" r="4" fill="#10b981" />
-            </g>
-
-            <circle cx="140" cy="30" r="6" fill="#8b5cf6" />
-            <circle cx="140" cy="170" r="6" fill="#06b6d4" />
-
-            <defs>
-              <linearGradient id="line-grad-1" x1="40" y1="100" x2="240" y2="100" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#8b5cf6" />
-                <stop offset="0.5" stopColor="#2563eb" />
-                <stop offset="1" stopColor="#06b6d4" />
-              </linearGradient>
-              <linearGradient id="line-grad-2" x1="140" y1="30" x2="140" y2="170" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#8b5cf6" />
-                <stop offset="1" stopColor="#06b6d4" />
-              </linearGradient>
-              <linearGradient id="line-grad-3" x1="40" y1="100" x2="240" y2="100" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#8b5cf6" stopOpacity="0" />
-                <stop offset="0.5" stopColor="#8b5cf6" stopOpacity="1" />
-                <stop offset="1" stopColor="#06b6d4" stopOpacity="0" />
-              </linearGradient>
-            </defs>
-          </svg>
+        <div className="auth-welcome-message" style={{ marginTop: '2rem' }}>
+          <h2>The operations workspace for service business owners.</h2>
+          <p>Login to clean your scheduling queue, audit conversations, and manage service knowledge bases.</p>
         </div>
       </section>
 
@@ -247,7 +212,7 @@ const Login = () => {
                   onClick={() => setPasswordVisible(!passwordVisible)}
                   title={passwordVisible ? 'Hide Password' : 'Show Password'}
                 >
-                  {passwordVisible ? '👁️' : '👁️‍🗨️'}
+                  {passwordVisible ? '👁' : '👁‍🗨'}
                 </button>
               </div>
             </div>
