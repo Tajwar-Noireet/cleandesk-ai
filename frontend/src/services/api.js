@@ -196,12 +196,12 @@ export const api = {
   },
 
   // Chat
-  sendMessage: async (message, conversationId = null) => {
+  sendMessage: async (businessId, message, conversationId = null) => {
     try {
       return await apiCall('/api/chat/message', {
         method: 'POST',
         body: JSON.stringify({
-          businessId: DEMO_BUSINESS_ID,
+          businessId: businessId || DEMO_BUSINESS_ID,
           conversationId,
           message
         })

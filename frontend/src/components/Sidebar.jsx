@@ -1,9 +1,30 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 
 const Sidebar = () => {
   const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const isSupabaseConfigured = 
+        import.meta.env.VITE_SUPABASE_URL && 
+        import.meta.env.VITE_SUPABASE_URL !== 'https://your-project.supabase.co';
+
+      if (isSupabaseConfigured) {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) setEmail(user.email);
+        } catch (err) {
+          console.error('Error fetching user email in sidebar:', err);
+        }
+      } else {
+        setEmail('owner@sparklehome.co.uk');
+      }
+    };
+    fetchUser();
+  }, []);
 
   const handleSignOut = async (e) => {
     const isSupabaseConfigured = 
@@ -21,6 +42,8 @@ const Sidebar = () => {
       }
     }
   };
+
+  const initials = email ? email.substring(0, 2).toUpperCase() : 'OW';
 
   return (
     <aside className="sidebar">
@@ -57,6 +80,15 @@ const Sidebar = () => {
         </NavLink>
       </nav>
       <div className="sidebar-footer">
+        {email && (
+          <div className="sidebar-profile-box">
+            <div className="profile-avatar">{initials}</div>
+            <div className="profile-details">
+              <span className="profile-role">Owner</span>
+              <span className="profile-email" title={email}>{email}</span>
+            </div>
+          </div>
+        )}
         <Link to="/" className="sidebar-logout" onClick={handleSignOut}>
           <span className="sidebar-item-icon">🚪</span>
           Sign Out

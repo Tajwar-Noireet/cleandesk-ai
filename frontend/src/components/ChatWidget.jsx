@@ -54,7 +54,7 @@ const ChatWidget = ({ businessId, demoMode = false }) => {
     setIsTyping(true);
 
     try {
-      const response = await api.sendMessage(userText, conversationId);
+      const response = await api.sendMessage(businessId, userText, conversationId);
       
       // Update states
       if (response.conversationId) {

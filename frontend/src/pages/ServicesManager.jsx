@@ -115,7 +115,16 @@ const ServicesManager = () => {
           <div className="list-side-container">
             <div className="services-grid-list">
               {services.length === 0 ? (
-                <p className="no-data-msg">No services configured. The AI will not be able to answer pricing questions.</p>
+                <div className="empty-state" style={{ padding: '3.5rem 2rem', textAlign: 'center', width: '100%' }}>
+                  <span style={{ fontSize: '2.5rem', marginBottom: '1rem', display: 'block' }}>🛠️</span>
+                  <h3>No services configured</h3>
+                  <p style={{ color: 'var(--text-light-secondary)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+                    Configure services to allow the AI receptionist to answer pricing and service capability queries.
+                  </p>
+                  <button className="btn-primary" onClick={() => setIsAdding(true)}>
+                    ➕ Add Your First Service
+                  </button>
+                </div>
               ) : (
                 services.map(service => (
                   <div key={service.id} className="manager-item-card">
