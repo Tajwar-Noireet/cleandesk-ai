@@ -1,9 +1,70 @@
 const { mockStore } = require('../lib/mockStore');
 const { isSupabaseConfigured, supabase } = require('../lib/supabaseClient');
 
+// Helper to check business ownership
+const checkBusinessOwnership = async (userId, businessId) => {
+  if (!userId || !businessId) return false;
+
+  if (isSupabaseConfigured()) {
+    try {
+      const { data, error } = await supabase
+        .from('businesses')
+        .select('user_id')
+        .eq('id', businessId);
+      
+      if (error || !data || data.length === 0) {
+        return false;
+      }
+      return data[0].user_id === userId;
+    } catch (err) {
+      console.error('❌ Supabase error checking business ownership for Leads:', err.message);
+      return false;
+    }
+  }
+
+  // Fallback to Mock Store
+  const business = mockStore.businesses.find(b => b.id === businessId);
+  if (!business) return false;
+  return business.user_id === userId;
+};
+
+// Helper to check Lead ownership by ID
+const checkLeadOwnership = async (userId, leadId) => {
+  if (!userId || !leadId) return false;
+
+  if (isSupabaseConfigured()) {
+    try {
+      const { data, error } = await supabase
+        .from('leads')
+        .select('business_id')
+        .eq('id', leadId);
+      
+      if (error || !data || data.length === 0) {
+        return false;
+      }
+      return await checkBusinessOwnership(userId, data[0].business_id);
+    } catch (err) {
+      console.error('❌ Supabase error checking Lead ownership:', err.message);
+      return false;
+    }
+  }
+
+  // Fallback to Mock Store
+  const lead = mockStore.leads.find(l => l.id === leadId);
+  if (!lead) return false;
+  return await checkBusinessOwnership(userId, lead.business_id);
+};
+
 // Get leads for a business
 exports.getLeadsByBusiness = async (req, res) => {
   const { businessId } = req.params;
+  const userId = req.user ? req.user.id : null;
+
+  // Enforce ownership
+  const isOwner = await checkBusinessOwnership(userId, businessId);
+  if (!isOwner) {
+    return res.status(403).json({ error: 'Forbidden: You do not own this business profile' });
+  }
 
   if (isSupabaseConfigured()) {
     try {
@@ -42,6 +103,13 @@ exports.createLead = async (req, res) => {
     preferred_date,
     notes
   } = req.body;
+  const userId = req.user ? req.user.id : null;
+
+  // Enforce ownership
+  const isOwner = await checkBusinessOwnership(userId, business_id);
+  if (!isOwner) {
+    return res.status(403).json({ error: 'Forbidden: You do not own this business profile' });
+  }
 
   if (isSupabaseConfigured()) {
     try {
@@ -92,6 +160,13 @@ exports.createLead = async (req, res) => {
 exports.updateLeadStatus = async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
+  const userId = req.user ? req.user.id : null;
+
+  // Enforce ownership
+  const isOwner = await checkLeadOwnership(userId, id);
+  if (!isOwner) {
+    return res.status(403).json({ error: 'Forbidden: You do not own this lead' });
+  }
 
   if (!['new', 'contacted', 'booked', 'lost'].includes(status)) {
     return res.status(400).json({ error: 'Invalid lead status' });

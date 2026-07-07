@@ -13,6 +13,9 @@ app.use(cors());
 // Parse JSON payloads
 app.use(express.json());
 
+// Serve static assets (for public embeddable widget script)
+app.use(express.static('public'));
+
 // Log incoming requests
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);

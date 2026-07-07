@@ -9,10 +9,14 @@ const ServicesManager = () => {
   const [isAdding, setIsAdding] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState('');
+  const [businessId, setBusinessId] = useState('');
 
   const loadServices = async () => {
     try {
-      const data = await api.getServices();
+      const bData = await api.getBusinessOfCurrentUser();
+      const targetId = bData.id || api.getDemoBusinessId();
+      setBusinessId(targetId);
+      const data = await api.getServices(targetId);
       setServices(data);
     } catch (err) {
       console.error(err);
@@ -27,7 +31,7 @@ const ServicesManager = () => {
 
   const handleAddSubmit = async (formData) => {
     try {
-      await api.createService(formData);
+      await api.createService({ business_id: businessId, ...formData });
       setMessage('✅ Service added successfully!');
       setIsAdding(false);
       loadServices();

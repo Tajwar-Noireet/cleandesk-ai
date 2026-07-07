@@ -12,13 +12,14 @@ const Dashboard = () => {
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
-        const bId = api.getDemoBusinessId();
-        const [bData, lData, cData] = await Promise.all([
-          api.getBusiness(bId),
-          api.getLeads(bId),
-          api.getConversations(bId)
-        ]);
+        const bData = await api.getBusinessOfCurrentUser();
         setBusiness(bData);
+        
+        const targetId = bData.id || api.getDemoBusinessId();
+        const [lData, cData] = await Promise.all([
+          api.getLeads(targetId),
+          api.getConversations(targetId)
+        ]);
         setLeads(lData);
         setConversations(cData);
       } catch (err) {
@@ -59,7 +60,8 @@ const Dashboard = () => {
             <h1 className="dashboard-title">{business?.name || 'CleanDesk AI'} Overview</h1>
           </div>
           <div className="dashboard-status-indicator">
-            <span className="dot pulse green"></span> Mock Database Mode Active
+            <span className={`dot pulse ${import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_URL !== 'https://your-project.supabase.co' ? 'green' : 'orange'}`}></span> 
+            {import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_URL !== 'https://your-project.supabase.co' ? 'Supabase Live Database Active' : 'Offline Mock Store Active'}
           </div>
         </header>
 

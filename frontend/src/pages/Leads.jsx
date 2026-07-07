@@ -10,7 +10,9 @@ const Leads = () => {
 
   const loadLeads = async () => {
     try {
-      const data = await api.getLeads();
+      const bData = await api.getBusinessOfCurrentUser();
+      const targetId = bData.id || api.getDemoBusinessId();
+      const data = await api.getLeads(targetId);
       setLeads(data);
     } catch (err) {
       console.error(err);

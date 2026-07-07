@@ -13,8 +13,9 @@ const Conversations = () => {
 
   const loadConversations = async () => {
     try {
-      const bId = api.getDemoBusinessId();
-      const data = await api.getConversations(bId);
+      const bData = await api.getBusinessOfCurrentUser();
+      const targetId = bData.id || api.getDemoBusinessId();
+      const data = await api.getConversations(targetId);
       setConversations(data);
       if (data.length > 0 && !activeConvId) {
         setActiveConvId(data[0].id);

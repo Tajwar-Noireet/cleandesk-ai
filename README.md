@@ -121,3 +121,14 @@ For step-by-step instructions on setting up your Supabase project, executing mig
 CleanDesk AI supports fully automated OpenAI-based customer booking interactions with structured slot extraction (capturing name, phone, address, etc.) and support escalations.
 
 For details on the prompt engineering layout, slot capturing order rules, support escalation triggers, and manual validation test scripts, please check the **[Phase 4 AI Intelligence & Automation Guide](file:///c:/Users/tazwa/cleandesk-ai/docs/PHASE_4_AI_INTELLIGENCE.md)**.
+
+---
+
+## 🔒 Phase 5: Productization & Security (Multi-Tenant & Widget Embeds)
+
+CleanDesk AI supports secure multi-tenant isolation, real Supabase user signup/login, backend token verification, and floating client-facing script embeds:
+- **Owner Authentication**: Authenticated owner profiles are secured on the client via Supabase Auth and decoded securely via JWTs in the backend Express middleware.
+- **Tenant Isolation**: Backend controllers restrict dashboard query mutations strictly to the creator of the business profile.
+- **Embeddable Chat Receptionist**: Lightweight client script widget served statically from `/widget.js` to float customer chat widgets on external websites.
+
+For details on configuration keys, Row Level Security policies, token verification, and widget sandbox verification, please refer to the detailed **[Phase 5 Productization & Security Guide](file:///c:/Users/tazwa/cleandesk-ai/docs/PHASE_5_PRODUCTIZATION.md)**.

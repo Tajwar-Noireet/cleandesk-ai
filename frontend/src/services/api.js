@@ -1,5 +1,6 @@
 // Client API Services for CleanDesk AI
 // Connects to the Express backend.
+import { supabase } from '../supabaseClient';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 const DEMO_BUSINESS_ID = 'd3b07384-d113-4ec5-a5d6-c6e7f8d9a101';
@@ -38,11 +39,23 @@ const frontendFallbackData = {
 // Generic API caller with fallback
 const apiCall = async (endpoint, options = {}) => {
   try {
+    let token = 'mock-token';
+    const isSupabaseConfigured = 
+      import.meta.env.VITE_SUPABASE_URL && 
+      import.meta.env.VITE_SUPABASE_URL !== 'https://your-project.supabase.co';
+
+    if (isSupabaseConfigured) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session && session.access_token) {
+        token = session.access_token;
+      }
+    }
+
     const response = await fetch(`${BACKEND_URL}${endpoint}`, {
       ...options,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer mock-token',
+        'Authorization': `Bearer ${token}`,
         ...options.headers,
       }
     });
@@ -61,6 +74,13 @@ export const api = {
   getDemoBusinessId: () => DEMO_BUSINESS_ID,
 
   // Business
+  getBusinessOfCurrentUser: async () => {
+    try {
+      return await apiCall('/api/business/user');
+    } catch {
+      return frontendFallbackData.business;
+    }
+  },
   getBusiness: async (id = DEMO_BUSINESS_ID) => {
     try {
       return await apiCall(`/api/business/${id}`);

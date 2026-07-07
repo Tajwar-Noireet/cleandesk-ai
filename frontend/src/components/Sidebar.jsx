@@ -1,7 +1,27 @@
 import React from 'react';
-import { NavLink, Link } from 'react-router-dom';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
 
 const Sidebar = () => {
+  const navigate = useNavigate();
+
+  const handleSignOut = async (e) => {
+    const isSupabaseConfigured = 
+      import.meta.env.VITE_SUPABASE_URL && 
+      import.meta.env.VITE_SUPABASE_URL !== 'https://your-project.supabase.co';
+
+    if (isSupabaseConfigured) {
+      e.preventDefault();
+      try {
+        await supabase.auth.signOut();
+        navigate('/login');
+      } catch (err) {
+        console.error('❌ Signout failed:', err.message);
+        navigate('/');
+      }
+    }
+  };
+
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
@@ -37,7 +57,7 @@ const Sidebar = () => {
         </NavLink>
       </nav>
       <div className="sidebar-footer">
-        <Link to="/" className="sidebar-logout">
+        <Link to="/" className="sidebar-logout" onClick={handleSignOut}>
           <span className="sidebar-item-icon">🚪</span>
           Sign Out
         </Link>

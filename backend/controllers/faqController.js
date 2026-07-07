@@ -1,6 +1,60 @@
 const { mockStore } = require('../lib/mockStore');
 const { isSupabaseConfigured, supabase } = require('../lib/supabaseClient');
 
+// Helper to check business ownership
+const checkBusinessOwnership = async (userId, businessId) => {
+  if (!userId || !businessId) return false;
+
+  if (isSupabaseConfigured()) {
+    try {
+      const { data, error } = await supabase
+        .from('businesses')
+        .select('user_id')
+        .eq('id', businessId);
+      
+      if (error || !data || data.length === 0) {
+        return false;
+      }
+      return data[0].user_id === userId;
+    } catch (err) {
+      console.error('❌ Supabase error checking business ownership for FAQs:', err.message);
+      return false;
+    }
+  }
+
+  // Fallback to Mock Store
+  const business = mockStore.businesses.find(b => b.id === businessId);
+  if (!business) return false;
+  return business.user_id === userId;
+};
+
+// Helper to check FAQ ownership by ID
+const checkFAQOwnership = async (userId, faqId) => {
+  if (!userId || !faqId) return false;
+
+  if (isSupabaseConfigured()) {
+    try {
+      const { data, error } = await supabase
+        .from('faqs')
+        .select('business_id')
+        .eq('id', faqId);
+      
+      if (error || !data || data.length === 0) {
+        return false;
+      }
+      return await checkBusinessOwnership(userId, data[0].business_id);
+    } catch (err) {
+      console.error('❌ Supabase error checking FAQ ownership:', err.message);
+      return false;
+    }
+  }
+
+  // Fallback to Mock Store
+  const faq = mockStore.faqs.find(f => f.id === faqId);
+  if (!faq) return false;
+  return await checkBusinessOwnership(userId, faq.business_id);
+};
+
 // Get FAQs for a business
 exports.getFAQsByBusiness = async (req, res) => {
   const { businessId } = req.params;
@@ -30,6 +84,13 @@ exports.getFAQsByBusiness = async (req, res) => {
 // Create an FAQ
 exports.createFAQ = async (req, res) => {
   const { business_id, question, answer } = req.body;
+  const userId = req.user ? req.user.id : null;
+
+  // Enforce ownership
+  const isOwner = await checkBusinessOwnership(userId, business_id);
+  if (!isOwner) {
+    return res.status(403).json({ error: 'Forbidden: You do not own this business profile' });
+  }
 
   if (isSupabaseConfigured()) {
     try {
@@ -63,6 +124,13 @@ exports.createFAQ = async (req, res) => {
 exports.updateFAQ = async (req, res) => {
   const { id } = req.params;
   const { question, answer } = req.body;
+  const userId = req.user ? req.user.id : null;
+
+  // Enforce ownership
+  const isOwner = await checkFAQOwnership(userId, id);
+  if (!isOwner) {
+    return res.status(403).json({ error: 'Forbidden: You do not own this FAQ' });
+  }
 
   if (isSupabaseConfigured()) {
     try {
@@ -106,6 +174,13 @@ exports.updateFAQ = async (req, res) => {
 // Delete an FAQ
 exports.deleteFAQ = async (req, res) => {
   const { id } = req.params;
+  const userId = req.user ? req.user.id : null;
+
+  // Enforce ownership
+  const isOwner = await checkFAQOwnership(userId, id);
+  if (!isOwner) {
+    return res.status(403).json({ error: 'Forbidden: You do not own this FAQ' });
+  }
 
   if (isSupabaseConfigured()) {
     try {

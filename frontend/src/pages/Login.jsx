@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
 
 const Login = () => {
   const [email, setEmail] = useState('owner@sparklehome.co.uk');
@@ -15,12 +16,33 @@ const Login = () => {
     setError('');
     setLoading(true);
 
-    // TODO: Connect Supabase Auth in Phase 3
-    // if (isRegistering) {
-    //   const { data, error } = await supabase.auth.signUp({ email, password });
-    // } else {
-    //   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    // }
+    const isSupabaseConfigured = 
+      import.meta.env.VITE_SUPABASE_URL && 
+      import.meta.env.VITE_SUPABASE_URL !== 'https://your-project.supabase.co';
+
+    if (isSupabaseConfigured) {
+      try {
+        let authResult;
+        if (isRegistering) {
+          authResult = await supabase.auth.signUp({ email, password });
+        } else {
+          authResult = await supabase.auth.signInWithPassword({ email, password });
+        }
+
+        if (authResult.error) {
+          throw authResult.error;
+        }
+
+        setLoading(false);
+        navigate('/dashboard');
+        return;
+      } catch (err) {
+        console.error('❌ Supabase Auth failed:', err.message);
+        setError(err.message);
+        setLoading(false);
+        return;
+      }
+    }
 
     // Mock delay
     setTimeout(() => {

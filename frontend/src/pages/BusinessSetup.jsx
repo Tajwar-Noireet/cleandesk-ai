@@ -3,6 +3,7 @@ import Sidebar from '../components/Sidebar';
 import { api } from '../services/api';
 
 const BusinessSetup = () => {
+  const [businessId, setBusinessId] = useState('');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -17,7 +18,8 @@ const BusinessSetup = () => {
   useEffect(() => {
     const loadBusiness = async () => {
       try {
-        const data = await api.getBusiness();
+        const data = await api.getBusinessOfCurrentUser();
+        setBusinessId(data.id || '');
         setName(data.name || '');
         setPhone(data.phone || '');
         setEmail(data.email || '');
@@ -39,7 +41,13 @@ const BusinessSetup = () => {
     setMessage('');
     
     try {
-      await api.updateBusiness(api.getDemoBusinessId(), {
+      const isSupabaseConfigured = 
+        import.meta.env.VITE_SUPABASE_URL && 
+        import.meta.env.VITE_SUPABASE_URL !== 'https://your-project.supabase.co';
+
+      const targetId = isSupabaseConfigured ? businessId : api.getDemoBusinessId();
+
+      await api.updateBusiness(targetId, {
         name,
         phone,
         email,
@@ -161,6 +169,25 @@ const BusinessSetup = () => {
             </button>
           </form>
         </div>
+
+        {/* Copy Script Snippet Box */}
+        {businessId && (
+          <div className="card-container" style={{ marginTop: '2rem' }}>
+            <div className="card-header">
+              <h3>Embed Chat Widget</h3>
+              <p>Copy and paste this script tag onto your Wix, WordPress, or HTML website right before the closing &lt;/body&gt; tag to deploy the receptionist widget.</p>
+            </div>
+            <div style={{ backgroundColor: '#0f172a', padding: '1.25rem', borderRadius: '8px', overflow: 'hidden' }}>
+              <pre style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8', overflowX: 'auto', textAlign: 'left', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+{`<script 
+  src="${window.location.origin.replace('5173', '5000')}/widget.js" 
+  data-business-id="${businessId}" 
+  async>
+</script>`}
+              </pre>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

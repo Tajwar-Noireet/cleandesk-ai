@@ -1,9 +1,70 @@
 const { mockStore } = require('../lib/mockStore');
 const { isSupabaseConfigured, supabase } = require('../lib/supabaseClient');
 
+// Helper to check business ownership
+const checkBusinessOwnership = async (userId, businessId) => {
+  if (!userId || !businessId) return false;
+
+  if (isSupabaseConfigured()) {
+    try {
+      const { data, error } = await supabase
+        .from('businesses')
+        .select('user_id')
+        .eq('id', businessId);
+      
+      if (error || !data || data.length === 0) {
+        return false;
+      }
+      return data[0].user_id === userId;
+    } catch (err) {
+      console.error('❌ Supabase error checking business ownership for Conversations:', err.message);
+      return false;
+    }
+  }
+
+  // Fallback to Mock Store
+  const business = mockStore.businesses.find(b => b.id === businessId);
+  if (!business) return false;
+  return business.user_id === userId;
+};
+
+// Helper to check conversation ownership by ID
+const checkConversationOwnership = async (userId, conversationId) => {
+  if (!userId || !conversationId) return false;
+
+  if (isSupabaseConfigured()) {
+    try {
+      const { data, error } = await supabase
+        .from('conversations')
+        .select('business_id')
+        .eq('id', conversationId);
+      
+      if (error || !data || data.length === 0) {
+        return false;
+      }
+      return await checkBusinessOwnership(userId, data[0].business_id);
+    } catch (err) {
+      console.error('❌ Supabase error checking Conversation ownership:', err.message);
+      return false;
+    }
+  }
+
+  // Fallback to Mock Store
+  const conversation = mockStore.conversations.find(c => c.id === conversationId);
+  if (!conversation) return false;
+  return await checkBusinessOwnership(userId, conversation.business_id);
+};
+
 // Get all conversations for a business
 exports.getConversationsByBusiness = async (req, res) => {
   const { businessId } = req.params;
+  const userId = req.user ? req.user.id : null;
+
+  // Enforce ownership
+  const isOwner = await checkBusinessOwnership(userId, businessId);
+  if (!isOwner) {
+    return res.status(403).json({ error: 'Forbidden: You do not own this business profile' });
+  }
 
   if (isSupabaseConfigured()) {
     try {
@@ -33,6 +94,13 @@ exports.getConversationsByBusiness = async (req, res) => {
 // Get details of a single conversation (including messages)
 exports.getConversationDetail = async (req, res) => {
   const { conversationId } = req.params;
+  const userId = req.user ? req.user.id : null;
+
+  // Enforce ownership
+  const isOwner = await checkConversationOwnership(userId, conversationId);
+  if (!isOwner) {
+    return res.status(403).json({ error: 'Forbidden: You do not own this conversation' });
+  }
 
   if (isSupabaseConfigured()) {
     try {

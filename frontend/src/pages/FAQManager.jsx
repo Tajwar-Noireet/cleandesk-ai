@@ -9,10 +9,14 @@ const FAQManager = () => {
   const [isAdding, setIsAdding] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState('');
+  const [businessId, setBusinessId] = useState('');
 
   const loadFAQs = async () => {
     try {
-      const data = await api.getFAQs();
+      const bData = await api.getBusinessOfCurrentUser();
+      const targetId = bData.id || api.getDemoBusinessId();
+      setBusinessId(targetId);
+      const data = await api.getFAQs(targetId);
       setFaqs(data);
     } catch (err) {
       console.error(err);
@@ -27,7 +31,7 @@ const FAQManager = () => {
 
   const handleAddSubmit = async (formData) => {
     try {
-      await api.createFAQ(formData);
+      await api.createFAQ({ business_id: businessId, ...formData });
       setMessage('✅ FAQ added successfully!');
       setIsAdding(false);
       loadFAQs();

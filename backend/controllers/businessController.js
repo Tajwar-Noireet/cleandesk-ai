@@ -36,16 +36,60 @@ exports.getBusiness = async (req, res) => {
   res.json(business);
 };
 
+// Get business profile associated with the authenticated user
+exports.getBusinessOfCurrentUser = async (req, res) => {
+  const userId = req.user ? req.user.id : null;
+
+  if (!userId) {
+    return res.status(401).json({ error: 'Unauthorized: User session missing' });
+  }
+
+  if (isSupabaseConfigured()) {
+    try {
+      const { data, error } = await supabase
+        .from('businesses')
+        .select('*')
+        .eq('user_id', userId);
+
+      if (error) {
+        console.error(`❌ Supabase error loading business for user ${userId}:`, error.message);
+        throw error;
+      }
+
+      if (data && data.length > 0) {
+        return res.json(data[0]);
+      } else {
+        return res.status(404).json({ error: 'No business profile found for this user' });
+      }
+    } catch (err) {
+      return res.status(500).json({ error: `Supabase query failed: ${err.message}` });
+    }
+  }
+
+  // Fallback to Mock Store
+  const business = mockStore.businesses.find(b => b.user_id === userId);
+  if (!business) {
+    // Return first seed business in mock mode if user_id doesn't match yet
+    return res.json(mockStore.businesses[0]);
+  }
+  res.json(business);
+};
+
 // Create a business profile
 exports.createBusiness = async (req, res) => {
   const { name, phone, email, service_area, opening_hours, description } = req.body;
+  const userId = req.user ? req.user.id : null;
+
+  if (!userId) {
+    return res.status(401).json({ error: 'Unauthorized to create business profile' });
+  }
   
   if (isSupabaseConfigured()) {
     try {
       const { data, error } = await supabase
         .from('businesses')
         .insert([{
-          user_id: req.user ? req.user.id : null,
+          user_id: userId,
           name, phone, email, service_area, opening_hours, description
         }])
         .select();
@@ -63,7 +107,7 @@ exports.createBusiness = async (req, res) => {
   // Mock Store insertion
   const newBusiness = {
     id: `b-${Date.now()}`,
-    user_id: req.user ? req.user.id : 'mock-user-123',
+    user_id: userId,
     name,
     phone,
     email,
@@ -79,9 +123,28 @@ exports.createBusiness = async (req, res) => {
 exports.updateBusiness = async (req, res) => {
   const { id } = req.params;
   const { name, phone, email, service_area, opening_hours, description } = req.body;
+  const userId = req.user ? req.user.id : null;
+
+  if (!userId) {
+    return res.status(401).json({ error: 'Unauthorized to update business profile' });
+  }
 
   if (isSupabaseConfigured()) {
     try {
+      // First, get the business to check ownership
+      const { data: current, error: fetchErr } = await supabase
+        .from('businesses')
+        .select('user_id')
+        .eq('id', id);
+
+      if (fetchErr || !current || current.length === 0) {
+        return res.status(404).json({ error: 'Business not found to verify ownership' });
+      }
+
+      if (current[0].user_id !== userId) {
+        return res.status(403).json({ error: 'Forbidden: You do not own this business' });
+      }
+
       const { data, error } = await supabase
         .from('businesses')
         .update({ name, phone, email, service_area, opening_hours, description })
@@ -107,6 +170,11 @@ exports.updateBusiness = async (req, res) => {
   const index = mockStore.businesses.findIndex(b => b.id === id);
   if (index === -1) {
     return res.status(404).json({ error: 'Business not found' });
+  }
+
+  // Verify mock ownership
+  if (mockStore.businesses[index].user_id !== userId) {
+    return res.status(403).json({ error: 'Forbidden: You do not own this business' });
   }
 
   const updated = {
