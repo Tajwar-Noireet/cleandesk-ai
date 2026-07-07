@@ -110,6 +110,35 @@ const Conversations = () => {
                   </div>
                 </div>
 
+                {/* Lead Progress Panel */}
+                {activeTranscript.lead && (
+                  <div className="transcript-lead-progress-panel">
+                    <div className="progress-panel-header">
+                      <span>🎯 Lead Capture Checklist</span>
+                      <span className={`status-pill ${activeTranscript.lead.status}`}>
+                        {activeTranscript.lead.status}
+                      </span>
+                    </div>
+                    <div className="progress-panel-slots">
+                      <span className={`progress-slot ${activeTranscript.lead.customer_name ? 'filled' : 'empty'}`}>
+                        👤 Name: {activeTranscript.lead.customer_name || 'Missing'}
+                      </span>
+                      <span className={`progress-slot ${activeTranscript.lead.customer_phone ? 'filled' : 'empty'}`}>
+                        📞 Phone: {activeTranscript.lead.customer_phone || 'Missing'}
+                      </span>
+                      <span className={`progress-slot ${activeTranscript.lead.address ? 'filled' : 'empty'}`}>
+                        📍 Address: {activeTranscript.lead.address || 'Missing'}
+                      </span>
+                      <span className={`progress-slot ${activeTranscript.lead.service_type ? 'filled' : 'empty'}`}>
+                        🧹 Service: {activeTranscript.lead.service_type || 'Missing'}
+                      </span>
+                      <span className={`progress-slot ${activeTranscript.lead.preferred_date ? 'filled' : 'empty'}`}>
+                        📅 Date: {activeTranscript.lead.preferred_date || 'Missing'}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 {/* Messages Box */}
                 <div className="transcript-messages-box">
                   {activeTranscript.messages && activeTranscript.messages.length === 0 ? (

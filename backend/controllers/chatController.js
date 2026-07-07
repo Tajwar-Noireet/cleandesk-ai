@@ -62,7 +62,6 @@ const getOrCreateConversation = async (conversationId, businessId, customerName 
 const getCurrentLeadState = async (conversationId, businessId) => {
   if (isSupabaseConfigured()) {
     try {
-      // Avoid .single() here because 0 rows is normal for a conversation without a lead
       const { data, error } = await supabase
         .from('leads')
         .select('*')
@@ -115,11 +114,12 @@ const saveMessage = async (conversationId, sender, content) => {
 };
 
 // Helper to update conversation metadata
-const updateConversationMeta = async (conversationId, aiConfidence, needsHumanReview, customerPhone) => {
+const updateConversationMeta = async (conversationId, aiConfidence, needsHumanReview, customerPhone, customerName) => {
   if (isSupabaseConfigured()) {
     try {
       const updates = { ai_confidence: aiConfidence, needs_human_review: needsHumanReview };
       if (customerPhone) updates.customer_phone = customerPhone;
+      if (customerName) updates.customer_name = customerName;
       
       const { error } = await supabase
         .from('conversations')
@@ -143,47 +143,72 @@ const updateConversationMeta = async (conversationId, aiConfidence, needsHumanRe
     if (customerPhone) {
       mockStore.conversations[idx].customer_phone = customerPhone;
     }
+    if (customerName) {
+      mockStore.conversations[idx].customer_name = customerName;
+    }
   }
 };
 
-// Helper to save or update lead
+// Helper to save or update lead - merging new lead fields with existing fields
 const saveOrUpdateLead = async (businessId, conversationId, detectedFields) => {
-  // We need enough fields to create a valid lead. Minimal: name and phone
-  if (!detectedFields.customer_name || !detectedFields.customer_phone) {
-    return 'in_progress';
+  if (!detectedFields) return 'none';
+
+  // Get current state to merge
+  const existingLead = await getCurrentLeadState(conversationId, businessId);
+  
+  const mergedFields = {
+    customer_name: detectedFields.customer_name || (existingLead ? existingLead.customer_name : null),
+    customer_phone: detectedFields.customer_phone || (existingLead ? existingLead.customer_phone : null),
+    address: detectedFields.address || (existingLead ? existingLead.address : null),
+    service_type: detectedFields.service_type || (existingLead ? existingLead.service_type : null),
+    preferred_date: detectedFields.preferred_date || (existingLead ? existingLead.preferred_date : null),
+    notes: detectedFields.notes || (existingLead ? existingLead.notes : null)
+  };
+
+  // Determine capture status
+  let status = 'none';
+  if (mergedFields.customer_name && mergedFields.customer_phone) {
+    status = 'captured';
+  } else if (
+    mergedFields.customer_name || 
+    mergedFields.customer_phone || 
+    mergedFields.address || 
+    mergedFields.service_type || 
+    mergedFields.preferred_date
+  ) {
+    status = 'in_progress';
   }
 
   if (isSupabaseConfigured()) {
     try {
-      // Avoid .single() because 0 rows (no lead exists yet) is normal
-      const { data: existingLead, error: selectErr } = await supabase
+      const { data: checkLead, error: checkErr } = await supabase
         .from('leads')
         .select('id')
         .eq('conversation_id', conversationId);
 
-      if (selectErr) {
-        console.error('❌ Supabase error checking existing lead:', selectErr.message);
+      if (checkErr) {
+        console.error('❌ Supabase error checking existing lead in saveOrUpdateLead:', checkErr.message);
       }
 
       const leadPayload = {
         business_id: businessId,
         conversation_id: conversationId,
-        customer_name: detectedFields.customer_name,
-        customer_phone: detectedFields.customer_phone,
-        address: detectedFields.address,
-        service_type: detectedFields.service_type,
-        preferred_date: detectedFields.preferred_date,
-        notes: detectedFields.notes
+        customer_name: mergedFields.customer_name,
+        customer_phone: mergedFields.customer_phone,
+        address: mergedFields.address,
+        service_type: mergedFields.service_type,
+        preferred_date: mergedFields.preferred_date,
+        notes: mergedFields.notes
       };
 
-      if (existingLead && existingLead.length > 0) {
+      if (checkLead && checkLead.length > 0) {
         const { error: updateErr } = await supabase
           .from('leads')
           .update(leadPayload)
-          .eq('id', existingLead[0].id);
+          .eq('id', checkLead[0].id);
         
         if (updateErr) {
-          console.error(`❌ Supabase error updating lead ${existingLead[0].id}:`, updateErr.message);
+          console.error(`❌ Supabase error updating lead ${checkLead[0].id}:`, updateErr.message);
           throw updateErr;
         }
       } else {
@@ -197,15 +222,7 @@ const saveOrUpdateLead = async (businessId, conversationId, detectedFields) => {
         }
       }
 
-      // If name has changed, update conversation customer_name
-      if (detectedFields.customer_name) {
-        await supabase
-          .from('conversations')
-          .update({ customer_name: detectedFields.customer_name })
-          .eq('id', conversationId);
-      }
-
-      return 'captured';
+      return status;
     } catch (err) {
       console.error('⚠️ Supabase saveOrUpdateLead failed. Falling back to Mock Store:', err.message);
     }
@@ -216,12 +233,12 @@ const saveOrUpdateLead = async (businessId, conversationId, detectedFields) => {
   const leadPayload = {
     business_id: businessId,
     conversation_id: conversationId,
-    customer_name: detectedFields.customer_name,
-    customer_phone: detectedFields.customer_phone,
-    address: detectedFields.address,
-    service_type: detectedFields.service_type,
-    preferred_date: detectedFields.preferred_date,
-    notes: detectedFields.notes,
+    customer_name: mergedFields.customer_name,
+    customer_phone: mergedFields.customer_phone,
+    address: mergedFields.address,
+    service_type: mergedFields.service_type,
+    preferred_date: mergedFields.preferred_date,
+    notes: mergedFields.notes,
     status: 'new'
   };
 
@@ -238,13 +255,7 @@ const saveOrUpdateLead = async (businessId, conversationId, detectedFields) => {
     });
   }
 
-  // If name has changed, update conversation customer_name
-  const cIdx = mockStore.conversations.findIndex(c => c.id === conversationId);
-  if (cIdx !== -1 && detectedFields.customer_name) {
-    mockStore.conversations[cIdx].customer_name = detectedFields.customer_name;
-  }
-
-  return 'captured';
+  return status;
 };
 
 // Handle incoming chat message
@@ -262,7 +273,30 @@ exports.handleMessage = async (req, res) => {
     // 2. Save the incoming customer message
     await saveMessage(conversation.id, 'customer', message);
 
-    // 3. Load business knowledge base
+    // 3. Retrieve recent message history (last 10 messages) for AI context
+    let history = [];
+    if (isSupabaseConfigured()) {
+      try {
+        const { data: msgs, error: msgsErr } = await supabase
+          .from('messages')
+          .select('sender, content')
+          .eq('conversation_id', conversation.id)
+          .order('created_at', { ascending: true })
+          .limit(10);
+        if (msgsErr) throw msgsErr;
+        history = msgs || [];
+      } catch (historyErr) {
+        console.error('❌ Supabase error loading message history:', historyErr.message);
+      }
+    } else {
+      history = mockStore.messages
+        .filter(m => m.conversation_id === conversation.id)
+        .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+        .slice(-10)
+        .map(m => ({ sender: m.sender, content: m.content }));
+    }
+
+    // 4. Load business knowledge base
     let businessProfile = {};
     let services = [];
     let faqs = [];
@@ -305,17 +339,17 @@ exports.handleMessage = async (req, res) => {
       faqs = mockStore.faqs.filter(f => f.business_id === businessId);
     }
 
-    // 4. Retrieve current lead status
+    // 5. Retrieve current lead status
     const currentLead = await getCurrentLeadState(conversation.id, businessId);
 
-    // 5. Send message and knowledge base to Python AI service
+    // 6. Send message, history, and knowledge base to Python AI service
     const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://localhost:8000';
     let aiResponse;
 
     try {
       const response = await axios.post(`${aiServiceUrl}/generate-response`, {
         message,
-        history: [], 
+        history: history, 
         business_profile: businessProfile,
         services,
         faqs,
@@ -343,20 +377,12 @@ exports.handleMessage = async (req, res) => {
       );
     }
 
-    // 6. Save AI reply to the database
+    // 7. Save AI reply to the database
     await saveMessage(conversation.id, 'ai', aiResponse.reply);
 
-    // 7. Update conversation metadata
-    await updateConversationMeta(
-      conversation.id,
-      aiResponse.confidence,
-      aiResponse.needs_human_review,
-      aiResponse.lead_fields_detected ? aiResponse.lead_fields_detected.customer_phone : null
-    );
-
-    // 8. Capture lead info if booking intent
+    // 8. Capture / Update lead info in DB
     let leadCaptureStatus = 'none';
-    if (aiResponse.intent === 'booking_request' || (currentLead && aiResponse.lead_fields_detected)) {
+    if (aiResponse.lead_fields_detected) {
       leadCaptureStatus = await saveOrUpdateLead(
         businessId,
         conversation.id,
@@ -364,7 +390,21 @@ exports.handleMessage = async (req, res) => {
       );
     }
 
-    // 9. Return JSON payload to client
+    // Retrieve final merged name/phone values to record in conversation
+    const updatedLead = await getCurrentLeadState(conversation.id, businessId);
+    const customerPhone = updatedLead ? updatedLead.customer_phone : (aiResponse.lead_fields_detected ? aiResponse.lead_fields_detected.customer_phone : null);
+    const customerName = updatedLead ? updatedLead.customer_name : (aiResponse.lead_fields_detected ? aiResponse.lead_fields_detected.customer_name : null);
+
+    // 9. Update conversation metadata (confidence, review, phone, name)
+    await updateConversationMeta(
+      conversation.id,
+      aiResponse.confidence,
+      aiResponse.needs_human_review,
+      customerPhone,
+      customerName
+    );
+
+    // 10. Return JSON payload to client
     res.json({
       conversationId: conversation.id,
       reply: aiResponse.reply,
@@ -372,7 +412,7 @@ exports.handleMessage = async (req, res) => {
       confidence: aiResponse.confidence,
       needsHumanReview: aiResponse.needs_human_review,
       leadCaptureStatus,
-      leadFields: aiResponse.lead_fields_detected,
+      leadFields: updatedLead || aiResponse.lead_fields_detected,
       nextRequiredField: aiResponse.next_required_field
     });
 

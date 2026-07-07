@@ -113,3 +113,11 @@ The AI service manages slot-extraction (name, phone, address, services, and pref
 The SQL schema configuration is stored at [docs/schema.sql](file:///c:/Users/tazwa/cleandesk-ai/docs/schema.sql). 
 
 For step-by-step instructions on setting up your Supabase project, executing migrations, configuring environment keys, and running tests, please refer to the detailed **[Phase 3 Supabase Integration Guide](file:///c:/Users/tazwa/cleandesk-ai/docs/PHASE_3_SUPABASE.md)**.
+
+---
+
+## 🤖 Phase 4: Real AI Intelligence & Support Automation
+
+CleanDesk AI supports fully automated OpenAI-based customer booking interactions with structured slot extraction (capturing name, phone, address, etc.) and support escalations.
+
+For details on the prompt engineering layout, slot capturing order rules, support escalation triggers, and manual validation test scripts, please check the **[Phase 4 AI Intelligence & Automation Guide](file:///c:/Users/tazwa/cleandesk-ai/docs/PHASE_4_AI_INTELLIGENCE.md)**.

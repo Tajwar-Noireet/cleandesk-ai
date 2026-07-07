@@ -53,6 +53,7 @@ exports.getConversationDetail = async (req, res) => {
 
       const conversation = convData[0];
 
+      // Fetch messages
       const { data: messages, error: mErr } = await supabase
         .from('messages')
         .select('*')
@@ -64,8 +65,19 @@ exports.getConversationDetail = async (req, res) => {
         throw mErr;
       }
 
+      // Fetch associated lead (if any exists yet)
+      const { data: leadData, error: lErr } = await supabase
+        .from('leads')
+        .select('*')
+        .eq('conversation_id', conversationId);
+
+      if (lErr) {
+        console.error(`❌ Supabase error loading lead for conversation ${conversationId}:`, lErr.message);
+      }
+
       return res.json({
         ...conversation,
+        lead: leadData && leadData.length > 0 ? leadData[0] : null,
         messages: messages || []
       });
     } catch (err) {
@@ -83,8 +95,12 @@ exports.getConversationDetail = async (req, res) => {
     .filter(m => m.conversation_id === conversationId)
     .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
+  // Find associated lead
+  const lead = mockStore.leads.find(l => l.conversation_id === conversationId);
+
   res.json({
     ...conversation,
+    lead: lead || null,
     messages
   });
 };
