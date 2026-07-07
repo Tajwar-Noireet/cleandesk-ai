@@ -95,9 +95,9 @@ const Dashboard = () => {
             <h1 className="dashboard-title">{business?.name || 'CleanDesk AI'} Overview</h1>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div className="dashboard-status-indicator" style={{ margin: 0 }}>
-              <span className={`dot pulse ${import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_URL !== 'https://your-project.supabase.co' ? 'green' : 'orange'}`}></span> 
-              {import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_URL !== 'https://your-project.supabase.co' ? 'Supabase Live' : 'Offline Mock'}
+            <div className="dashboard-status-indicator" style={{ margin: 0, display: 'flex', alignItems: 'center' }}>
+              <span className="dot pulse" style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: (import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_URL !== 'https://your-project.supabase.co') ? '#15803D' : '#B45309', boxShadow: (import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_URL !== 'https://your-project.supabase.co') ? '0 0 8px #15803D' : '0 0 8px #B45309', marginRight: '0.4rem' }}></span> 
+              {(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_URL !== 'https://your-project.supabase.co') ? 'Supabase Live' : 'Offline Mock'}
             </div>
             <button className="btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', cursor: 'pointer' }} onClick={handleSignOut}>
               🚪 Logout

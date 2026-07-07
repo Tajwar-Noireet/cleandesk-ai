@@ -98,7 +98,7 @@ const ChatWidget = ({ businessId, demoMode = false }) => {
       {/* Floating Toggle Button */}
       {!isOpen && (
         <button className="chat-widget-toggle" onClick={() => setIsOpen(true)}>
-          💬 Ask AI Receptionist
+          💬 Ask Assistant
         </button>
       )}
 
@@ -106,15 +106,15 @@ const ChatWidget = ({ businessId, demoMode = false }) => {
         <div className="chat-window">
           <div className={`chat-header ${needsHumanReview ? 'review-warning' : ''}`}>
             <div className="chat-header-info">
-              <span className="chat-avatar">{needsHumanReview ? '⚠️' : '🤖'}</span>
+              <span className="chat-avatar">{needsHumanReview ? '⚠️' : '✨'}</span>
               <div>
                 <h4 className="chat-title">
-                  {needsHumanReview ? 'Human Takeover Requested' : 'AI Receptionist'}
+                  {needsHumanReview ? 'Human Takeover Requested' : 'Operations Assistant'}
                 </h4>
                 <p className="chat-subtitle">
                   {needsHumanReview 
                     ? 'Owner notified to review' 
-                    : `SparkleHome Cleaning • AI Confidence: ${Math.round(confidence * 100)}%`}
+                    : `SparkleHome Cleaning • Confidence: ${Math.round(confidence * 100)}%`}
                 </p>
               </div>
             </div>
@@ -128,7 +128,7 @@ const ChatWidget = ({ businessId, demoMode = false }) => {
                   {msg.content}
                   {msg.confidence !== undefined && (
                     <span className="message-confidence">
-                      🤖 {Math.round(msg.confidence * 100)}%
+                      ✨ {Math.round(msg.confidence * 100)}%
                     </span>
                   )}
                 </div>

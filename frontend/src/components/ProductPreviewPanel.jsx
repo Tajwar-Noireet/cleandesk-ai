@@ -35,7 +35,7 @@ const ProductPreviewPanel = () => {
           <div className="mock-card">
             <div className="card-header-row">
               <h4>Recent Customer Operations</h4>
-              <span className="live-tag"><span className="dot pulse green"></span> Live Feed</span>
+              <span className="live-tag"><span className="dot pulse" style={{ backgroundColor: '#15803D', boxShadow: '0 0 8px #15803D' }}></span> Live Feed</span>
             </div>
             <div className="mock-table">
               <div className="table-hdr">

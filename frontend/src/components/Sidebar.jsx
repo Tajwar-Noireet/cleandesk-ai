@@ -49,8 +49,8 @@ const Sidebar = () => {
     <aside className="sidebar">
       <div className="sidebar-header">
         <Link to="/" className="sidebar-logo">
-          <span className="logo-icon">✨</span>
-          <span className="logo-text">CleanDesk<span className="logo-accent">.AI</span></span>
+          <span className="logo-icon" style={{ color: '#C87941', marginRight: '0.2rem' }}>✨</span>
+          <span className="logo-text" style={{ fontFamily: 'var(--font-heading)', fontWeight: '700' }}>CleanDesk</span>
         </Link>
       </div>
       <nav className="sidebar-nav">
