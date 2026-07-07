@@ -9,109 +9,147 @@ const Home = () => {
     <div className="landing-page">
       <Navbar />
       
-      {/* 1. Hero Section */}
-      <header className="hero-section">
-        <div className="hero-grid-container">
-          <div className="hero-text-block">
-            <span className="hero-announcement">✨ The operating system for service operations</span>
-            <h1 className="hero-title">
-              Turn missed enquiries into booked jobs.
-            </h1>
-            <p className="hero-subtitle">
-              CleanDesk helps local service businesses respond faster, capture leads, and manage customer conversations from one polished workspace.
-            </p>
-            <div className="hero-ctas">
-              <Link to="/demo" className="btn-primary btn-large">Try the live demo</Link>
-              <Link to="/login" className="btn-secondary btn-large">Open owner dashboard</Link>
-            </div>
-            <div className="hero-security-notes">
-              <span>✓ No credit card required</span>
-              <span>•</span>
-              <span>✓ Set up in minutes</span>
-            </div>
-          </div>
+      {/* 1. Radical Premium Hero Section */}
+      <header className="hero-section text-center">
+        <div className="hero-announcement-pill">
+          <span className="pill-dot"></span>
+          <span>The Operating System for Customer Operations</span>
+        </div>
+        <h1 className="hero-mega-title">
+          Turn missed enquiries <br />
+          <span className="text-glow-gradient">into booked jobs.</span>
+        </h1>
+        <p className="hero-mega-subtitle">
+          CleanDesk helps service businesses respond instantly, capture structured leads, and manage client communications in a unified workspace.
+        </p>
+        <div className="hero-button-row">
+          <Link to="/demo" className="btn-primary btn-large font-semibold">
+            Try the live demo <span>→</span>
+          </Link>
+          <Link to="/login" className="btn-secondary btn-large">
+            Open owner dashboard
+          </Link>
+        </div>
+        <div className="hero-trust-row">
+          <span>✓ Instant setup</span>
+          <span>•</span>
+          <span>✓ Supabase secured</span>
+          <span>•</span>
+          <span>✓ No credit card required</span>
+        </div>
 
-          <div className="hero-visual-block">
-            <OperationsFlowPreview />
-          </div>
+        {/* Large Dominant Interactive Preview Panel */}
+        <div className="hero-showcase-container">
+          <div className="showcase-glowing-background"></div>
+          <OperationsFlowPreview />
         </div>
       </header>
 
-      {/* 2. Bento Grid Section */}
+      {/* 2. Asymmetric Bento Grid Section */}
       <section className="bento-section">
         <div className="section-header">
-          <span className="section-tag">Capabilities</span>
-          <h2 className="section-title">Engineered for Local Service Growth</h2>
-          <p className="section-subtitle">A quiet, powerful receptionist workflow designed to keep business owners in control.</p>
+          <span className="section-tag">Features & Capabilities</span>
+          <h2 className="section-title">Built for Serious Service Operations</h2>
+          <p className="section-subtitle">A highly polished bento workflow that qualifies leads and automates responses.</p>
         </div>
 
         <div className="bento-grid">
-          {/* Bento Card 1 */}
+          {/* Card 1: Enquiry Capture (2/3 width) */}
           <div className="bento-card col-span-2">
             <div className="bento-card-visual bg-gradient-cyan">
-              <div className="visual-chat-row">
-                <span className="chat-avatar">👤</span>
-                <div className="chat-bubble-mini">"Do you clean gutters on commercial properties?"</div>
-              </div>
-              <div className="visual-chat-row reply">
-                <div className="chat-bubble-mini reply">"Yes, we cover commercial gutters. Let me get details..."</div>
-                <span className="chat-avatar ai">🤖</span>
+              <div className="visual-preview-inbox">
+                <div className="inbox-item-mini active">
+                  <div className="inbox-hdr">
+                    <span>💬 Enquiry from SW1A</span>
+                    <span className="status-pill new">new</span>
+                  </div>
+                  <p>"Do you have availability for deep cleaning this Friday at 10 AM?"</p>
+                </div>
+                <div className="inbox-item-mini reply">
+                  <div className="inbox-hdr">
+                    <span className="text-cyan">✨ CleanDesk Response</span>
+                    <span className="status-pill booked">sent</span>
+                  </div>
+                  <p>"Yes, we have standard deep cleaners available on Friday at 10 AM. Can I have your name and phone?"</p>
+                </div>
               </div>
             </div>
             <div className="bento-card-content">
-              <h3>Capture every enquiry</h3>
-              <p>Instantly respond to incoming website quotes or general questions 24/7. Never lose a lead to slow response times.</p>
+              <h3>Capture every incoming enquiry</h3>
+              <p>Respond to quote requests, capability questions, and schedules instantly. Never let a client request go unanswered.</p>
             </div>
           </div>
 
-          {/* Bento Card 2 */}
+          {/* Card 2: Qualification Checklist (1/3 width) */}
           <div className="bento-card">
             <div className="bento-card-visual bg-grid-lines">
-              <div className="slot-pill-group">
-                <span className="slot-pill checked">✓ Name</span>
-                <span className="slot-pill checked">✓ Phone</span>
-                <span className="slot-pill checked">✓ Zone</span>
+              <div className="checklist-preview-widget">
+                <div className="chk-line checked">✓ Name: Sarah Jenkins</div>
+                <div className="chk-line checked">✓ Phone: 07700 900077</div>
+                <div className="chk-line checked">✓ Address: SW1A 1AA</div>
+                <div className="chk-line pending">☐ Confirmation Pending</div>
               </div>
             </div>
             <div className="bento-card-content">
               <h3>Qualify leads automatically</h3>
-              <p>Extract client names, phone numbers, addresses, and service dates into structured booking parameters.</p>
+              <p>Extract client names, phone numbers, addresses, and service dates directly from text chats into structured rows.</p>
             </div>
           </div>
 
-          {/* Bento Card 3 */}
+          {/* Card 3: Owner Escalation Banner (1/3 width) */}
           <div className="bento-card">
             <div className="bento-card-visual bg-center-icon">
-              <span className="center-icon">🚨</span>
-            </div>
-            <div className="bento-card-content">
-              <h3>Keep owners in control</h3>
-              <p>If a customer asks a low-confidence question, the AI receptionist pauses and flags the chat for human review.</p>
-            </div>
-          </div>
-
-          {/* Bento Card 4 */}
-          <div className="bento-card col-span-2">
-            <div className="bento-card-visual bg-outcomes">
-              <div className="outcome-mini-card">
-                <div className="hdr">📈 Analytics</div>
-                <div className="stat">14 leads captured this week</div>
+              <div className="pulsing-escalation-preview">
+                <span className="icon">🚨</span>
+                <span className="text">Needs Human Review</span>
               </div>
             </div>
             <div className="bento-card-content">
-              <h3>See conversations & outcomes</h3>
-              <p>View transcripts, status trackers, and response analytics in a secure owner interface.</p>
+              <h3>Keep owners in control</h3>
+              <p>If client messages indicate rescheduling, complex claims, or negative sentiment, the AI flags the chat for takeover.</p>
+            </div>
+          </div>
+
+          {/* Card 4: Outcomes Table Snippet (2/3 width) */}
+          <div className="bento-card col-span-2">
+            <div className="bento-card-visual bg-outcomes">
+              <div className="outcomes-graph-mock">
+                <div className="graph-bar-row">
+                  <span>Mon</span>
+                  <div className="bar" style={{ height: '40%' }}></div>
+                  <strong>£340</strong>
+                </div>
+                <div className="graph-bar-row">
+                  <span>Tue</span>
+                  <div className="bar" style={{ height: '70%' }}></div>
+                  <strong>£610</strong>
+                </div>
+                <div className="graph-bar-row">
+                  <span>Wed</span>
+                  <div className="bar" style={{ height: '90%' }}></div>
+                  <strong>£980</strong>
+                </div>
+                <div className="graph-bar-row active">
+                  <span>Thu</span>
+                  <div className="bar" style={{ height: '95%' }}></div>
+                  <strong>£1,450</strong>
+                </div>
+              </div>
+            </div>
+            <div className="bento-card-content">
+              <h3>Real operational analytics</h3>
+              <p>Monitor pipeline conversions, captured details, and transcript histories to optimize service performance.</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 3. Product Workspace Preview */}
+      {/* 3. Product Workspace Preview Panel */}
       <section className="product-preview-section">
         <div className="section-header">
-          <span className="section-tag">Workspace Preview</span>
-          <h2 className="section-title">The Customer Operations Workspace</h2>
-          <p className="section-subtitle">Real product surfaces built to streamline leads, transcripts, and business settings.</p>
+          <span className="section-tag">Software Interface</span>
+          <h2 className="section-title">The Unified Operations Interface</h2>
+          <p className="section-subtitle">A high-fidelity layout representing the dashboard workspace for business managers.</p>
         </div>
         
         <div className="product-visual-wrapper">
@@ -119,27 +157,27 @@ const Home = () => {
         </div>
       </section>
 
-      {/* 4. Use Case / Case Study */}
+      {/* 4. Case Study comparison */}
       <section className="case-study-section">
         <div className="case-study-container">
           <div className="case-study-text">
-            <span className="case-tag">Case Study</span>
-            <h3>SparkleHome Cleaning</h3>
+            <span className="case-tag">Success Story</span>
+            <h3>SparkleHome Cleaning Testimonial</h3>
             <p className="description">
-              SparkleHome Cleaning operates a team of 8 cleaners across London Zones 1-4. They were losing 30% of quotes because teams were in the field. By setting up CleanDesk, they automated initial responses and captured qualified leads.
+              SparkleHome covers Zones 1-4 with 8 deep cleaners. They were losing 30% of incoming quotes because their team was in the field. Embedding CleanDesk let them qualify bookings instantly.
             </p>
             <div className="comparison-row">
               <div className="comparison-card before">
                 <strong>Before CleanDesk</strong>
                 <p>✗ Missed WhatsApp messages</p>
-                <p>✗ 4-hour delay on email quotes</p>
-                <p>✗ Manual phone qualifying</p>
+                <p>✗ 4-hour delay on price quotes</p>
+                <p>✗ Lost 12 leads per week</p>
               </div>
               <div className="comparison-card after">
                 <strong>After CleanDesk</strong>
-                <p>✓ Instant replies to deep cleaning FAQs</p>
-                <p>✓ 14 verified lead bookings captured</p>
-                <p>✓ Flagged escalation notifications</p>
+                <p>✓ 100% of price queries answered in 2s</p>
+                <p>✓ 14 fully qualified bookings captured</p>
+                <p>✓ 0 missed enquiries in first week</p>
               </div>
             </div>
           </div>
@@ -149,11 +187,15 @@ const Home = () => {
       {/* 5. Final CTA */}
       <section className="final-cta-section">
         <div className="final-cta-container">
-          <h2>Ready to automate your operations?</h2>
-          <p>Deploy a virtual receptionist on your site and manage booking leads effortlessly.</p>
-          <div className="hero-ctas">
-            <Link to="/demo" className="btn-primary btn-large">Try the live demo</Link>
-            <Link to="/login" className="btn-secondary btn-large">Open owner dashboard</Link>
+          <h2>Ready to transform your service operations?</h2>
+          <p>Deploy your receptionist chatbot widget in minutes and keep your schedule booked.</p>
+          <div className="hero-button-row centered">
+            <Link to="/demo" className="btn-primary btn-large font-semibold">
+              Try the live demo <span>→</span>
+            </Link>
+            <Link to="/login" className="btn-secondary btn-large">
+              Open owner dashboard
+            </Link>
           </div>
         </div>
       </section>
