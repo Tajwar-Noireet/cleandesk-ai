@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import ServiceForm from '../components/ServiceForm';
 import { api } from '../services/api';
@@ -10,16 +11,18 @@ const ServicesManager = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [businessId, setBusinessId] = useState('');
+  const navigate = useNavigate();
 
   const loadServices = async () => {
     try {
       const bData = await api.getBusinessOfCurrentUser();
-      const targetId = bData.id || api.getDemoBusinessId();
+      const targetId = bData.id;
       setBusinessId(targetId);
       const data = await api.getServices(targetId);
       setServices(data);
     } catch (err) {
       console.error(err);
+      navigate('/dashboard/business');
     } finally {
       setIsLoading(false);
     }

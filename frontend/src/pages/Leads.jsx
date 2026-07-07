@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import LeadCard from '../components/LeadCard';
 import { api } from '../services/api';
@@ -7,15 +8,17 @@ const Leads = () => {
   const [leads, setLeads] = useState([]);
   const [filterStatus, setFilterStatus] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
   const loadLeads = async () => {
     try {
       const bData = await api.getBusinessOfCurrentUser();
-      const targetId = bData.id || api.getDemoBusinessId();
+      const targetId = bData.id;
       const data = await api.getLeads(targetId);
       setLeads(data);
     } catch (err) {
       console.error(err);
+      navigate('/dashboard/business');
     } finally {
       setIsLoading(false);
     }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import ConversationCard from '../components/ConversationCard';
 import { api } from '../services/api';
@@ -10,11 +11,12 @@ const Conversations = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingTranscript, setIsLoadingTranscript] = useState(false);
   const transcriptEndRef = useRef(null);
+  const navigate = useNavigate();
 
   const loadConversations = async () => {
     try {
       const bData = await api.getBusinessOfCurrentUser();
-      const targetId = bData.id || api.getDemoBusinessId();
+      const targetId = bData.id;
       const data = await api.getConversations(targetId);
       setConversations(data);
       if (data.length > 0 && !activeConvId) {
@@ -22,6 +24,7 @@ const Conversations = () => {
       }
     } catch (err) {
       console.error(err);
+      navigate('/dashboard/business');
     } finally {
       setIsLoading(false);
     }

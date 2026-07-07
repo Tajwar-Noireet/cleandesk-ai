@@ -75,9 +75,16 @@ export const api = {
 
   // Business
   getBusinessOfCurrentUser: async () => {
+    return await apiCall('/api/business/me');
+  },
+  createBusiness: async (data) => {
     try {
-      return await apiCall('/api/business/user');
+      return await apiCall('/api/business', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
     } catch {
+      frontendFallbackData.business = { id: `b-${Date.now()}`, ...data };
       return frontendFallbackData.business;
     }
   },

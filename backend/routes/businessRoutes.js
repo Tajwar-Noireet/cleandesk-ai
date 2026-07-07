@@ -4,6 +4,7 @@ const businessController = require('../controllers/businessController');
 const authMiddleware = require('../middleware/authMiddleware');
 
 // Get business profile associated with the authenticated user
+router.get('/me', authMiddleware, businessController.getBusinessOfCurrentUser);
 router.get('/user', authMiddleware, businessController.getBusinessOfCurrentUser);
 
 // Get business by ID - Public (so chatbot can fetch profile details)

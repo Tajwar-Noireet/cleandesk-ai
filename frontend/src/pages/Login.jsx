@@ -16,6 +16,13 @@ const Login = () => {
     setError('');
     setLoading(true);
 
+    // Clear cached business / tenant states to prevent tenant leaks
+    localStorage.removeItem('businessId');
+    sessionStorage.removeItem('businessId');
+    localStorage.removeItem('cd_business_id');
+    sessionStorage.removeItem('cd_business_id');
+    localStorage.removeItem('cd_conv_d3b07384-d113-4ec5-a5d6-c6e7f8d9a101');
+
     const isSupabaseConfigured = 
       import.meta.env.VITE_SUPABASE_URL && 
       import.meta.env.VITE_SUPABASE_URL !== 'https://your-project.supabase.co';

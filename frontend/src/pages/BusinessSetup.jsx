@@ -45,17 +45,29 @@ const BusinessSetup = () => {
         import.meta.env.VITE_SUPABASE_URL && 
         import.meta.env.VITE_SUPABASE_URL !== 'https://your-project.supabase.co';
 
-      const targetId = isSupabaseConfigured ? businessId : api.getDemoBusinessId();
-
-      await api.updateBusiness(targetId, {
+      const payload = {
         name,
         phone,
         email,
         service_area: serviceArea,
         opening_hours: openingHours,
         description
-      });
-      setMessage('✅ Business profile updated successfully!');
+      };
+
+      if (isSupabaseConfigured) {
+        if (businessId) {
+          await api.updateBusiness(businessId, payload);
+          setMessage('✅ Business profile updated successfully!');
+        } else {
+          const newB = await api.createBusiness(payload);
+          setBusinessId(newB.id);
+          setMessage('✅ Business profile created successfully!');
+        }
+      } else {
+        // Mock Mode: update the demo business
+        await api.updateBusiness(api.getDemoBusinessId(), payload);
+        setMessage('✅ Business profile updated successfully! (Mock Mode)');
+      }
     } catch (err) {
       console.error(err);
       setMessage('❌ Failed to save profile.');

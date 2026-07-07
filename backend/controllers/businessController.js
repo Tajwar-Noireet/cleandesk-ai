@@ -69,8 +69,7 @@ exports.getBusinessOfCurrentUser = async (req, res) => {
   // Fallback to Mock Store
   const business = mockStore.businesses.find(b => b.user_id === userId);
   if (!business) {
-    // Return first seed business in mock mode if user_id doesn't match yet
-    return res.json(mockStore.businesses[0]);
+    return res.status(404).json({ error: 'No business profile found for this user (Mock Store)' });
   }
   res.json(business);
 };

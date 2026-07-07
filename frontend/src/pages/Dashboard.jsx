@@ -1,21 +1,54 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import StatCard from '../components/StatCard';
 import { api } from '../services/api';
+import { supabase } from '../supabaseClient';
 
 const Dashboard = () => {
   const [leads, setLeads] = useState([]);
   const [conversations, setConversations] = useState([]);
   const [business, setBusiness] = useState(null);
+  const [userEmail, setUserEmail] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
+
+  const handleSignOut = async (e) => {
+    e.preventDefault();
+    const isSupabaseConfigured = 
+      import.meta.env.VITE_SUPABASE_URL && 
+      import.meta.env.VITE_SUPABASE_URL !== 'https://your-project.supabase.co';
+
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.auth.signOut();
+      } catch (err) {
+        console.error('Sign out error:', err);
+      }
+    }
+    navigate('/login');
+  };
 
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
+        const isSupabaseConfigured = 
+          import.meta.env.VITE_SUPABASE_URL && 
+          import.meta.env.VITE_SUPABASE_URL !== 'https://your-project.supabase.co';
+
+        if (isSupabaseConfigured) {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            setUserEmail(user.email);
+          }
+        } else {
+          setUserEmail('owner@sparklehome.co.uk');
+        }
+
         const bData = await api.getBusinessOfCurrentUser();
         setBusiness(bData);
         
-        const targetId = bData.id || api.getDemoBusinessId();
+        const targetId = bData.id;
         const [lData, cData] = await Promise.all([
           api.getLeads(targetId),
           api.getConversations(targetId)
@@ -24,12 +57,14 @@ const Dashboard = () => {
         setConversations(cData);
       } catch (err) {
         console.error("Error loading dashboard data:", err);
+        // Redirect to Business profile setup if no business exists
+        navigate('/dashboard/business');
       } finally {
         setIsLoading(false);
       }
     };
     loadDashboardData();
-  }, []);
+  }, [navigate]);
 
   // Compute metrics
   const totalLeads = leads.length;
@@ -56,12 +91,17 @@ const Dashboard = () => {
       <main className="dashboard-content">
         <header className="dashboard-header">
           <div>
-            <span className="dashboard-welcome">Welcome back, Owner</span>
+            <span className="dashboard-welcome">Welcome back, {userEmail}</span>
             <h1 className="dashboard-title">{business?.name || 'CleanDesk AI'} Overview</h1>
           </div>
-          <div className="dashboard-status-indicator">
-            <span className={`dot pulse ${import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_URL !== 'https://your-project.supabase.co' ? 'green' : 'orange'}`}></span> 
-            {import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_URL !== 'https://your-project.supabase.co' ? 'Supabase Live Database Active' : 'Offline Mock Store Active'}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div className="dashboard-status-indicator" style={{ margin: 0 }}>
+              <span className={`dot pulse ${import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_URL !== 'https://your-project.supabase.co' ? 'green' : 'orange'}`}></span> 
+              {import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_URL !== 'https://your-project.supabase.co' ? 'Supabase Live' : 'Offline Mock'}
+            </div>
+            <button className="btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', cursor: 'pointer' }} onClick={handleSignOut}>
+              🚪 Logout
+            </button>
           </div>
         </header>
 

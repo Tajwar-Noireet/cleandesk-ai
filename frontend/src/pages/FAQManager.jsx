@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import FAQForm from '../components/FAQForm';
 import { api } from '../services/api';
@@ -10,16 +11,18 @@ const FAQManager = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [businessId, setBusinessId] = useState('');
+  const navigate = useNavigate();
 
   const loadFAQs = async () => {
     try {
       const bData = await api.getBusinessOfCurrentUser();
-      const targetId = bData.id || api.getDemoBusinessId();
+      const targetId = bData.id;
       setBusinessId(targetId);
       const data = await api.getFAQs(targetId);
       setFaqs(data);
     } catch (err) {
       console.error(err);
+      navigate('/dashboard/business');
     } finally {
       setIsLoading(false);
     }
