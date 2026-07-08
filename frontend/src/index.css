@@ -181,7 +181,7 @@ a {
 
 .navbar {
   border-bottom: 1px solid var(--border-light);
-  background-color: rgba(247, 243, 234, 0.85);
+  background-color: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(12px);
   position: sticky;
   top: 0;
@@ -191,7 +191,7 @@ a {
 .navbar-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 1rem 2rem;
+  padding: 0.5rem 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;

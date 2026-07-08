@@ -1,18 +1,32 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import Logo from './Logo';
+import PillNav from './PillNav';
 
 const Navbar = () => {
+  const { pathname } = useLocation();
+
+  const navItems = [
+    { label: 'Home', href: '/' },
+    { label: 'Demo', href: '/demo' },
+    { label: 'Dashboard', href: '/dashboard' },
+    { label: 'Login', href: '/login' }
+  ];
+
   return (
-    <nav className="navbar">
-      <div className="navbar-container">
-        <Link to="/" className="navbar-logo" style={{ display: 'inline-flex', alignItems: 'center' }}>
-          <Logo size={24} dark={false} />
-        </Link>
-        <div className="navbar-links">
-          <Link to="/demo" className="navbar-link">Interactive Demo</Link>
-          <Link to="/login" className="navbar-btn-login">Open Dashboard</Link>
-        </div>
+    <nav className="navbar" style={{ padding: '0.5rem 1rem', height: 'auto', display: 'flex', justifyContent: 'center' }}>
+      <div className="navbar-container" style={{ width: '100%', maxWidth: '1200px', display: 'flex', justifyContent: 'center' }}>
+        <PillNav
+          logo={<Logo size={22} dark={true} showText={false} />}
+          logoAlt="CleanDesk"
+          items={navItems}
+          activeHref={pathname}
+          baseColor="#111111"
+          pillColor="#ffffff"
+          pillTextColor="#111111"
+          hoveredPillTextColor="#ffffff"
+          initialLoadAnimation={true}
+        />
       </div>
     </nav>
   );
