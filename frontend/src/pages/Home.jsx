@@ -1,55 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import Navbar from '../components/Navbar';
 import Logo from '../components/Logo';
-import LineSidebar from '../components/LineSidebar';
 import AnimatedSection from '../components/AnimatedSection';
 import AnimatedWorkflowBoard from '../components/AnimatedWorkflowBoard';
 import AnimatedBentoGrid from '../components/AnimatedBentoGrid';
 import { fadeUp, scaleIn, staggerContainer } from '../utils/motionPresets';
 
 const Home = () => {
-  const [activeSidebarIndex, setActiveSidebarIndex] = useState(0);
   const [mockActiveLead, setMockActiveLead] = useState('thomas');
-
-  const sectionIds = ['intro', 'workflow', 'inbox', 'automation', 'dashboard', 'case-study', 'demo'];
-
-  const handleSidebarItemClick = (index, label) => {
-    const id = sectionIds[index];
-    const el = document.getElementById(id);
-    if (el) {
-      const yOffset = -80;
-      const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
-      window.scrollTo({ top: y, behavior: 'smooth' });
-    }
-  };
-
-  useEffect(() => {
-    const handleIntersect = (entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const index = sectionIds.indexOf(entry.target.id);
-          if (index !== -1) {
-            setActiveSidebarIndex(index);
-          }
-        }
-      });
-    };
-
-    const observer = new IntersectionObserver(handleIntersect, {
-      root: null,
-      rootMargin: '-30% 0px -70% 0px',
-      threshold: 0
-    });
-
-    sectionIds.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) observer.observe(el);
-    });
-
-    return () => observer.disconnect();
-  }, []);
 
   const inboxCards = [
     {
@@ -178,32 +138,6 @@ const Home = () => {
       <Navbar />
 
       <div className="home-layout-container">
-        {/* Sticky Desktop Side Navigation (ReactBits LineSidebar) */}
-        <aside className="sticky-sidebar-nav">
-          <div className="sticky-nav-wrapper">
-            <LineSidebar
-              items={['Intro', 'Workflow', 'Inbox', 'Automation', 'Dashboard', 'Case Study', 'Demo']}
-              accentColor="#2563EB"
-              textColor="#6B7280"
-              markerColor="#D1D5DB"
-              showIndex={true}
-              showMarker={true}
-              proximityRadius={90}
-              maxShift={14}
-              falloff="smooth"
-              markerLength={42}
-              markerGap={8}
-              tickScale={0.45}
-              scaleTick={true}
-              itemGap={18}
-              fontSize={0.95}
-              smoothing={90}
-              defaultActive={activeSidebarIndex}
-              onItemClick={handleSidebarItemClick}
-            />
-          </div>
-        </aside>
-
         {/* Main Content Area */}
         <main className="home-main-content">
           {/* SECTION 1: Intro / Hero */}
