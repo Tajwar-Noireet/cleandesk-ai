@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../supabaseClient';
 import Logo from '../components/Logo';
 
@@ -110,7 +111,12 @@ const Login = () => {
   return (
     <div className="auth-split-layout">
       {/* Left side: Branding and Marketing Panel */}
-      <section className="auth-left-panel">
+      <motion.section 
+        className="auth-left-panel"
+        initial={{ opacity: 0, x: -30 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
+      >
         <div className="auth-logo-row">
           <Link to="/" className="auth-brand-text" style={{ display: 'inline-flex', alignItems: 'center' }}>
             <Logo size={28} dark={false} />
@@ -151,11 +157,16 @@ const Login = () => {
           <h2>The operations workspace for service business owners.</h2>
           <p>Login to clean your scheduling queue, audit conversations, and manage service knowledge bases.</p>
         </div>
-      </section>
+      </motion.section>
 
       {/* Right side: Auth Form Panel */}
       <main className="auth-right-panel">
-        <div className="glass-auth-card">
+        <motion.div 
+          className="glass-auth-card"
+          initial={{ opacity: 0, y: 25 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: 'easeOut', delay: 0.15 }}
+        >
           <div className="auth-tabs">
             <button 
               type="button" 
@@ -173,8 +184,33 @@ const Login = () => {
             </button>
           </div>
 
-          {error && <div className="login-error-alert">{error}</div>}
-          {success && <div className="form-message-alert success" style={{ marginBottom: '1.5rem', fontSize: '0.85rem' }}>{success}</div>}
+          <AnimatePresence mode="wait">
+            {error && (
+              <motion.div 
+                key="error"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="login-error-alert"
+              >
+                {error}
+              </motion.div>
+            )}
+            {success && (
+              <motion.div 
+                key="success"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="form-message-alert success" 
+                style={{ marginBottom: '1.5rem', fontSize: '0.85rem' }}
+              >
+                {success}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <form onSubmit={handleAuthSubmit} className="login-form">
             <div className="form-group">
@@ -208,11 +244,11 @@ const Login = () => {
                 />
                 <button
                   type="button"
-                  className="password-toggle-eye"
+                  className="auth-toggle-password"
                   onClick={() => setPasswordVisible(!passwordVisible)}
-                  title={passwordVisible ? 'Hide Password' : 'Show Password'}
+                  aria-label={passwordVisible ? 'Hide password' : 'Show password'}
                 >
-                  {passwordVisible ? '👁' : '👁‍🗨'}
+                  {passwordVisible ? '👁️' : '🙈'}
                 </button>
               </div>
             </div>
@@ -222,7 +258,7 @@ const Login = () => {
                 <label className="form-label" htmlFor="auth-confirm-password">Confirm Password</label>
                 <input
                   id="auth-confirm-password"
-                  type="password"
+                  type={passwordVisible ? 'text' : 'password'}
                   className="form-input"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
@@ -248,7 +284,7 @@ const Login = () => {
             <span>🛡️</span>
             <span>Secure authentication powered by Supabase</span>
           </div>
-        </div>
+        </motion.div>
       </main>
     </div>
   );

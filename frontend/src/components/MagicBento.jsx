@@ -1,5 +1,7 @@
 import { useRef, useEffect, useCallback, useState } from 'react';
 import { gsap } from 'gsap';
+import { motion } from 'motion/react';
+import { fadeUp } from '../utils/motionPresets';
 import './MagicBento.css';
 
 const DEFAULT_PARTICLE_COUNT = 6;
@@ -608,10 +610,11 @@ const MagicBento = ({
           }
 
           return (
-            <div
+            <motion.div
               key={index}
               className={baseClassName}
               style={cardStyle}
+              variants={fadeUp}
               ref={el => {
                 if (!el) return;
 
@@ -726,7 +729,7 @@ const MagicBento = ({
                 <h2 className="magic-bento-card__title">{card.title}</h2>
                 <p className="magic-bento-card__description">{card.description}</p>
               </div>
-            </div>
+            </motion.div>
           );
         })}
       </BentoCardGrid>

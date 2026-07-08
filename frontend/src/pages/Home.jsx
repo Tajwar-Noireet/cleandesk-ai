@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
 import Navbar from '../components/Navbar';
 import Logo from '../components/Logo';
 import LineSidebar from '../components/LineSidebar';
-import MagicBento from '../components/MagicBento';
+import AnimatedSection from '../components/AnimatedSection';
+import AnimatedWorkflowBoard from '../components/AnimatedWorkflowBoard';
+import AnimatedBentoGrid from '../components/AnimatedBentoGrid';
+import { fadeUp, scaleIn, staggerContainer } from '../utils/motionPresets';
 
 const Home = () => {
   const [activeSidebarIndex, setActiveSidebarIndex] = useState(0);
+  const [mockActiveLead, setMockActiveLead] = useState('thomas');
 
   const sectionIds = ['intro', 'workflow', 'inbox', 'automation', 'dashboard', 'case-study', 'demo'];
 
@@ -14,7 +19,6 @@ const Home = () => {
     const id = sectionIds[index];
     const el = document.getElementById(id);
     if (el) {
-      // Offset slightly to account for sticky navbar height
       const yOffset = -80;
       const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
       window.scrollTo({ top: y, behavior: 'smooth' });
@@ -203,160 +207,84 @@ const Home = () => {
         {/* Main Content Area */}
         <main className="home-main-content">
           {/* SECTION 1: Intro / Hero */}
-          <section id="intro" className="hero-section scroll-section">
-            <div className="hero-copy">
-              <div className="hero-announcement-pill">
+          <AnimatedSection id="intro" className="hero-section scroll-section">
+            <motion.div className="hero-copy" variants={staggerContainer} initial="hidden" animate="visible">
+              <motion.div className="hero-announcement-pill" variants={fadeUp}>
                 <span className="pill-dot"></span>
                 <span>Operating System for Customer Operations</span>
-              </div>
+              </motion.div>
               
               {/* Giant Brand Presence in Hero */}
-              <div className="hero-brand-logo-area">
+              <motion.div className="hero-brand-logo-area" variants={fadeUp}>
                 <Logo size={42} dark={false} className="hero-brand-logo" />
-              </div>
+              </motion.div>
 
-              <h1 className="hero-mega-title">
+              <motion.h1 className="hero-mega-title" variants={fadeUp}>
                 Turn missed enquiries<br />
                 <span>into booked jobs.</span>
-              </h1>
+              </motion.h1>
               
-              <p className="hero-mega-subtitle">
+              <motion.p className="hero-mega-subtitle" variants={fadeUp}>
                 CleanDesk gives service businesses one calm workspace to respond faster, qualify leads, and keep every customer conversation under control.
-              </p>
+              </motion.p>
               
-              <div className="hero-actions">
+              <motion.div className="hero-actions" variants={fadeUp}>
                 <Link to="/demo" className="btn-primary btn-large font-semibold">
                   Try the live demo <span>→</span>
                 </Link>
                 <Link to="/login" className="btn-secondary btn-large">
                   Open owner dashboard
                 </Link>
-              </div>
-            </div>
-          </section>
+              </motion.div>
+            </motion.div>
+          </AnimatedSection>
 
           {/* SECTION 2: Workflow Pipeline */}
-          <section id="workflow" className="workflow-board-section scroll-section">
+          <AnimatedSection id="workflow" className="workflow-board-section scroll-section">
             <div className="section-header">
               <span className="section-tag">Operations Pipeline</span>
               <h2>How CleanDesk captures booking requests</h2>
               <p>A unified capture pipeline that guides quote inquiries from raw chat logs directly into confirmed tickets.</p>
             </div>
 
-            <div className="workflow-board-container">
-              <div className="workflow-board-header">
-                <h4>Customer Capture Pipeline</h4>
-                <div className="pipeline-legend">
-                  <span className="dot pulse green"></span>
-                  <span>Active Capturing</span>
-                </div>
-              </div>
-              
-              <div className="workflow-board">
-                <div className="workflow-card card-incoming">
-                  <div className="card-badge badge-blue">Enquiry</div>
-                  <p className="card-body">"Looking for regular domestic cleaning weekly from Friday. Can you quote?"</p>
-                  <div className="card-meta">Web Chat • Just now</div>
-                </div>
-
-                <div className="workflow-card card-matched">
-                  <div className="card-badge badge-gray">Knowledge Base</div>
-                  <div className="match-item">
-                    <span>Service: Domestic Clean</span>
-                    <strong>£16/hr</strong>
-                  </div>
-                  <div className="match-item">
-                    <span>Availability: Fridays</span>
-                    <strong>Available</strong>
-                  </div>
-                </div>
-
-                <div className="workflow-card card-captured">
-                  <div className="card-badge badge-green">Lead Checklist</div>
-                  <div className="captured-slot">✓ Service: Weekly Domestic</div>
-                  <div className="captured-slot">✓ Day: Friday</div>
-                  <div className="captured-slot">☐ Details Requested</div>
-                </div>
-
-                <div className="workflow-card card-review">
-                  <div className="card-badge badge-amber">Sentiment Flag</div>
-                  <p className="card-body">"Client requests custom stain details. Escalated to owner review."</p>
-                  <div className="escalation-badge">⚠️ Flagged for Takeover</div>
-                </div>
-
-                <div className="workflow-card card-booked">
-                  <div className="card-badge badge-black">Job Created</div>
-                  <div className="job-ticket">
-                    <strong>Weekly Clean</strong>
-                    <span>£16/hr • Friday 10:00</span>
-                  </div>
-                  <div className="ticket-status-pill">Pending Confirmation</div>
-                </div>
-              </div>
-
-              <div className="workflow-canvas-line">
-                <svg width="100%" height="8" viewBox="0 0 1000 8" fill="none" preserveAspectRatio="none">
-                  <path d="M 0 4 L 1000 4" stroke="#E5E7EB" strokeWidth="2" strokeDasharray="6 6" />
-                  <path d="M 0 4 L 450 4" stroke="#2563EB" strokeWidth="2" />
-                </svg>
-              </div>
-            </div>
-          </section>
+            {/* Clickable Workflow Board Component */}
+            <AnimatedWorkflowBoard />
+          </AnimatedSection>
 
           {/* SECTION 3: Inbox Grid */}
           <section id="inbox" className="inbox-showcase-section scroll-section bento-section">
-            <div className="section-header">
-              <span className="section-tag">Qualified Data</span>
-              <h2>Operations Lead Inbox</h2>
-              <p>Stop searching through messy email threads and text threads. CleanDesk structures raw conversations automatically.</p>
-            </div>
+            <AnimatedSection className="section-header-wrapper" viewportMargin="-120px">
+              <div className="section-header">
+                <span className="section-tag">Qualified Data</span>
+                <h2>Operations Lead Inbox</h2>
+                <p>Stop searching through messy email threads and text threads. CleanDesk structures raw conversations automatically.</p>
+              </div>
+            </AnimatedSection>
 
-            <MagicBento
-              cards={inboxCards}
-              textAutoHide={false}
-              enableStars={false}
-              enableSpotlight={true}
-              enableBorderGlow={true}
-              enableTilt={true}
-              enableMagnetism={false}
-              clickEffect={true}
-              spotlightRadius={300}
-              particleCount={6}
-              glowColor="37, 99, 235"
-              disableAnimations={false}
-            />
+            {/* Animated Bento Grid using Stagger and Spotlight */}
+            <AnimatedBentoGrid cards={inboxCards} />
           </section>
 
           {/* SECTION 4: Automation */}
           <section id="automation" className="automation-details-section scroll-section bento-section">
-            <div className="section-header">
-              <span className="section-tag">Failsafe Actions</span>
-              <h2>Configured Knowledge & Validation</h2>
-              <p>Keep responses consistent with your business policies. The assistant uses your exact pricing rules.</p>
-            </div>
+            <AnimatedSection className="section-header-wrapper" viewportMargin="-120px">
+              <div className="section-header">
+                <span className="section-tag">Failsafe Actions</span>
+                <h2>Configured Knowledge & Validation</h2>
+                <p>Keep responses consistent with your business policies. The assistant uses your exact pricing rules.</p>
+              </div>
+            </AnimatedSection>
 
-            <MagicBento
-              cards={automationCards}
-              textAutoHide={false}
-              enableStars={false}
-              enableSpotlight={true}
-              enableBorderGlow={true}
-              enableTilt={true}
-              enableMagnetism={false}
-              clickEffect={true}
-              spotlightRadius={300}
-              particleCount={6}
-              glowColor="37, 99, 235"
-              disableAnimations={false}
-            />
+            {/* Animated Bento Grid */}
+            <AnimatedBentoGrid cards={automationCards} />
           </section>
 
           {/* SECTION 5: Dashboard Workspace Showcase */}
-          <section id="dashboard" className="dashboard-showcase-section scroll-section">
+          <AnimatedSection id="dashboard" className="dashboard-showcase-section scroll-section">
             <div className="section-header">
               <span className="section-tag">Mock Workspace</span>
               <h2>Unified Business Operations Dashboard</h2>
-              <p>The workspace built for service operators. Audit active chats, verify customer info, and confirm schedules.</p>
+              <p>The workspace built for service operators. Click recent leads below to test live tab audit transitions.</p>
             </div>
 
             <div className="dashboard-showcase">
@@ -399,7 +327,14 @@ const Home = () => {
                       <h4>Recent Leads Feed</h4>
                     </div>
                     <div className="showcase-table">
-                      <div className="table-row active">
+                      <div 
+                        className={`table-row ${mockActiveLead === 'thomas' ? 'active' : ''}`}
+                        onClick={() => setMockActiveLead('thomas')}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setMockActiveLead('thomas'); }}
+                        style={{ cursor: 'pointer', outline: 'none' }}
+                      >
                         <div className="row-user">
                           <strong>Thomas More</strong>
                           <span>07700 900142</span>
@@ -407,7 +342,14 @@ const Home = () => {
                         <span>End of Tenancy</span>
                         <span className="pill status-booked">booked</span>
                       </div>
-                      <div className="table-row">
+                      <div 
+                        className={`table-row ${mockActiveLead === 'sarah' ? 'active' : ''}`}
+                        onClick={() => setMockActiveLead('sarah')}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setMockActiveLead('sarah'); }}
+                        style={{ cursor: 'pointer', outline: 'none' }}
+                      >
                         <div className="row-user">
                           <strong>Sarah Jenkins</strong>
                           <span>07700 900077</span>
@@ -418,45 +360,111 @@ const Home = () => {
                     </div>
                   </div>
 
-                  {/* Middle Column: Chat Audit Transcript */}
+                  {/* Middle Column: Chat Audit Transcript (Animated with AnimatePresence) */}
                   <div className="layout-column col-middle">
                     <div className="pane-header">
                       <h4>Conversational Audit Logs</h4>
                       <span className="accuracy-pill">96% Confidence</span>
                     </div>
-                    <div className="showcase-chat-log">
-                      <div className="chat-msg customer">
-                        <span className="avatar">C</span>
-                        <div className="bubble">
-                          <div className="sender">Customer</div>
-                          <p>Do you clean carpets as part of end of tenancy?</p>
-                        </div>
-                      </div>
-                      <div className="chat-msg assistant">
-                        <span className="avatar">A</span>
-                        <div className="bubble">
-                          <div className="sender">Assistant</div>
-                          <p>Yes, carpet steam cleaning can be added for £45 extra. Shall I add that to your quote?</p>
-                        </div>
-                      </div>
+                    <div className="showcase-chat-log" style={{ position: 'relative', overflow: 'hidden' }}>
+                      <AnimatePresence mode="wait">
+                        {mockActiveLead === 'thomas' ? (
+                          <motion.div
+                            key="thomas-chat"
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 10 }}
+                            transition={{ duration: 0.2 }}
+                            style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}
+                          >
+                            <div className="chat-msg customer">
+                              <span className="avatar">C</span>
+                              <div className="bubble">
+                                <div className="sender">Customer</div>
+                                <p>Do you clean carpets as part of end of tenancy?</p>
+                              </div>
+                            </div>
+                            <div className="chat-msg assistant">
+                              <span className="avatar">A</span>
+                              <div className="bubble">
+                                <div className="sender">Assistant</div>
+                                <p>Yes, carpet steam cleaning can be added for £45 extra. Shall I add that to your quote?</p>
+                              </div>
+                            </div>
+                          </motion.div>
+                        ) : (
+                          <motion.div
+                            key="sarah-chat"
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 10 }}
+                            transition={{ duration: 0.2 }}
+                            style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}
+                          >
+                            <div className="chat-msg customer">
+                              <span className="avatar">C</span>
+                              <div className="bubble">
+                                <div className="sender">Customer</div>
+                                <p>Need a deep clean of a 3 bed house this Wednesday.</p>
+                              </div>
+                            </div>
+                            <div className="chat-msg assistant">
+                              <span className="avatar">A</span>
+                              <div className="bubble">
+                                <div className="sender">Assistant</div>
+                                <p>I've checked our database and we have slots available this Wednesday. The deep clean base rate is £180. Should I confirm?</p>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                   </div>
 
-                  {/* Right Column: Customer Details */}
+                  {/* Right Column: Customer Details (Animated) */}
                   <div className="layout-column col-right">
                     <div className="pane-header">
                       <h4>Lead Meta Attributes</h4>
                     </div>
                     <div className="meta-attribute-panel">
-                      <div className="meta-section">
-                        <h5>Extracted Data</h5>
-                        <div className="meta-checklist">
-                          <div className="check-item-span check-filled">✓ Name: Thomas More</div>
-                          <div className="check-item-span check-filled">✓ Phone: 07700 900142</div>
-                          <div className="check-item-span check-filled">✓ Service: End of Tenancy</div>
-                        </div>
-                      </div>
-                      <div className="meta-section">
+                      <AnimatePresence mode="wait">
+                        {mockActiveLead === 'thomas' ? (
+                          <motion.div
+                            key="thomas-meta"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.15 }}
+                            className="meta-section"
+                            style={{ width: '100%' }}
+                          >
+                            <h5>Extracted Data</h5>
+                            <div className="meta-checklist">
+                              <div className="check-item-span check-filled">✓ Name: Thomas More</div>
+                              <div className="check-item-span check-filled">✓ Phone: 07700 900142</div>
+                              <div className="check-item-span check-filled">✓ Service: End of Tenancy</div>
+                            </div>
+                          </motion.div>
+                        ) : (
+                          <motion.div
+                            key="sarah-meta"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.15 }}
+                            className="meta-section"
+                            style={{ width: '100%' }}
+                          >
+                            <h5>Extracted Data</h5>
+                            <div className="meta-checklist">
+                              <div className="check-item-span check-filled">✓ Name: Sarah Jenkins</div>
+                              <div className="check-item-span check-filled">✓ Phone: 07700 900077</div>
+                              <div className="check-item-span check-filled">✓ Service: Deep Clean</div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                      <div className="meta-section" style={{ marginTop: 'auto', width: '100%' }}>
                         <h5>Actions</h5>
                         <button className="btn-primary btn-small btn-full">Confirm Booking</button>
                       </div>
@@ -465,10 +473,10 @@ const Home = () => {
                 </div>
               </div>
             </div>
-          </section>
+          </AnimatedSection>
 
           {/* SECTION 6: Case Study */}
-          <section id="case-study" className="case-study-section-custom scroll-section">
+          <AnimatedSection id="case-study" className="case-study-section-custom scroll-section">
             <div className="case-study-container-custom">
               <div className="case-study-content">
                 <span className="case-tag-custom">Operational Case Study</span>
@@ -497,10 +505,10 @@ const Home = () => {
                 </div>
               </div>
             </div>
-          </section>
+          </AnimatedSection>
 
           {/* SECTION 7: Demo / Call to Action */}
-          <section id="demo" className="final-cta-banner scroll-section">
+          <AnimatedSection id="demo" className="final-cta-banner scroll-section">
             <div className="cta-banner-content">
               <h2>Give every enquiry a clear next step.</h2>
               <p>Deploy your widget in minutes, capture structured leads, and keep your calendar booked.</p>
@@ -513,7 +521,7 @@ const Home = () => {
                 </Link>
               </div>
             </div>
-          </section>
+          </AnimatedSection>
         </main>
       </div>
 

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
 import Sidebar from '../components/Sidebar';
 import StatCard from '../components/StatCard';
 import { api } from '../services/api';
 import { supabase } from '../supabaseClient';
+import { fadeUp, staggerContainer } from '../utils/motionPresets';
 
 const Dashboard = () => {
   const [leads, setLeads] = useState([]);
@@ -88,8 +90,13 @@ const Dashboard = () => {
     <div className="dashboard-wrapper">
       <Sidebar />
       
-      <main className="dashboard-content">
-        <header className="dashboard-header">
+      <motion.main 
+        className="dashboard-content"
+        variants={staggerContainer}
+        initial="hidden"
+        animate="visible"
+      >
+        <motion.header className="dashboard-header" variants={fadeUp}>
           <div>
             <span className="dashboard-welcome">Welcome back, {userEmail}</span>
             <h1 className="dashboard-title">{business?.name || 'CleanDesk'} Overview</h1>
@@ -103,10 +110,10 @@ const Dashboard = () => {
               🚪 Logout
             </button>
           </div>
-        </header>
+        </motion.header>
 
         {/* Stats Grid */}
-        <section className="stats-grid">
+        <motion.section className="stats-grid" variants={fadeUp}>
           <StatCard 
             title="Total Leads" 
             value={totalLeads} 
@@ -139,10 +146,10 @@ const Dashboard = () => {
             badgeType="positive"
             description="NLP accuracy rating"
           />
-        </section>
+        </motion.section>
 
         {/* Recent Leads and Activity Preview */}
-        <div className="dashboard-preview-grid">
+        <motion.div className="dashboard-preview-grid" variants={fadeUp}>
           <div className="preview-card">
             <h3>Recent Captured Leads</h3>
             {leads.length === 0 ? (
@@ -184,8 +191,8 @@ const Dashboard = () => {
               </div>
             )}
           </div>
-        </div>
-      </main>
+        </motion.div>
+      </motion.main>
     </div>
   );
 };
