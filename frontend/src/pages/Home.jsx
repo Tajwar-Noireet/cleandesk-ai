@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Logo from '../components/Logo';
 import LineSidebar from '../components/LineSidebar';
+import MagicBento from '../components/MagicBento';
 
 const Home = () => {
   const [activeSidebarIndex, setActiveSidebarIndex] = useState(0);
@@ -45,6 +46,128 @@ const Home = () => {
 
     return () => observer.disconnect();
   }, []);
+
+  const inboxCards = [
+    {
+      label: 'Pipeline',
+      title: 'Operations Lead Inbox',
+      description: 'A structured feed of all incoming client enquiries, postcodes, and booking requests.',
+      gridSpan: 'span 2',
+      visual: (
+        <div className="mini-lead-list">
+          <div className="lead-row active">
+            <div className="lead-row-info">
+              <strong>Marcus Sterling</strong>
+              <span>Deep Clean • SW1A 1AA</span>
+            </div>
+            <span className="pill status-new">new</span>
+          </div>
+          <div className="lead-row">
+            <div className="lead-row-info">
+              <strong>Janet Vance</strong>
+              <span>Weekly Maid • W1B 2BC</span>
+            </div>
+            <span className="pill status-contacted">contacted</span>
+          </div>
+        </div>
+      )
+    },
+    {
+      label: 'Failsafe',
+      title: 'Human Takeover',
+      description: 'Alerts the business owner to step in if conversation sentiment shifts.',
+      gridSpan: 'span 1',
+      visual: (
+        <div className="escalation-alert-indicator">
+          <span className="pulse-alert-dot"></span>
+          <span className="alert-text">Review Required</span>
+        </div>
+      )
+    },
+    {
+      label: 'Audit Logs',
+      title: 'Conversation History',
+      description: 'Audit chat logs between customers and assistant in real time.',
+      gridSpan: 'span 3',
+      visual: (
+        <div className="mini-kb-box" style={{ gap: '0.4rem', background: 'transparent', border: 'none', padding: 0 }}>
+          <div className="kb-item" style={{ padding: '0.4rem 0.6rem' }}>
+            <span style={{ fontSize: '0.6rem', color: '#6B7280', fontWeight: 'bold' }}>Customer</span>
+            <span style={{ fontSize: '0.7rem', color: '#0A0A0A', marginTop: '0.15rem' }}>Do you steam clean carpets?</span>
+          </div>
+          <div className="kb-item" style={{ padding: '0.4rem 0.6rem', borderColor: '#2563EB' }}>
+            <span style={{ fontSize: '0.6rem', color: '#2563EB', fontWeight: 'bold' }}>Assistant</span>
+            <span style={{ fontSize: '0.7rem', color: '#0A0A0A', marginTop: '0.15rem' }}>Yes, we add steam clean for £45.</span>
+          </div>
+        </div>
+      )
+    }
+  ];
+
+  const automationCards = [
+    {
+      label: 'Validation',
+      title: 'Qualification Checklist',
+      description: 'Extract names, phone numbers, and job dates from conversations automatically.',
+      gridSpan: 'span 1',
+      visual: (
+        <div className="mini-checklist-box">
+          <div className="chk-row checked">✓ Name: Marcus Sterling</div>
+          <div className="chk-row checked">✓ Service: End of Tenancy</div>
+          <div className="chk-row checked">✓ Date: Next Friday</div>
+          <div className="chk-row empty">☐ Address: Pending</div>
+        </div>
+      )
+    },
+    {
+      label: 'Training',
+      title: 'Service Knowledge Base',
+      description: 'Define custom pricing structures, postcodes, and hours for the assistant.',
+      gridSpan: 'span 1',
+      visual: (
+        <div className="mini-kb-box">
+          <div className="kb-item">
+            <strong>Standard Office Cleaning</strong>
+            <span>£22/hr base rate • Monday - Friday</span>
+          </div>
+          <div className="kb-item">
+            <strong>Domestic Deep Clean</strong>
+            <span>£180 base rate • Multi-room catalog</span>
+          </div>
+        </div>
+      )
+    },
+    {
+      label: 'Analytics',
+      title: 'Operational Outcomes',
+      description: 'Monitor response speed, pipeline conversion, and booking values.',
+      gridSpan: 'span 1',
+      visual: (
+        <div className="mini-bar-chart">
+          <div className="chart-bar-col">
+            <span>£420</span>
+            <div className="bar" style={{ height: '40px' }}></div>
+            <span className="day">Mon</span>
+          </div>
+          <div className="chart-bar-col">
+            <span>£780</span>
+            <div className="bar" style={{ height: '70px' }}></div>
+            <span className="day">Tue</span>
+          </div>
+          <div className="chart-bar-col">
+            <span>£1,120</span>
+            <div className="bar" style={{ height: '100px' }}></div>
+            <span className="day">Wed</span>
+          </div>
+          <div className="chart-bar-col active">
+            <span>£1,680</span>
+            <div className="bar" style={{ height: '120px' }}></div>
+            <span className="day">Thu</span>
+          </div>
+        </div>
+      )
+    }
+  ];
 
   return (
     <div className="home-shell">
@@ -181,101 +304,51 @@ const Home = () => {
           </section>
 
           {/* SECTION 3: Inbox Grid */}
-          <section id="inbox" className="inbox-showcase-section scroll-section">
+          <section id="inbox" className="inbox-showcase-section scroll-section bento-section">
             <div className="section-header">
               <span className="section-tag">Qualified Data</span>
               <h2>Operations Lead Inbox</h2>
               <p>Stop searching through messy email threads and text threads. CleanDesk structures raw conversations automatically.</p>
             </div>
 
-            <div className="bento-grid-custom">
-              {/* Card 1: Lead Inbox (Large) */}
-              <div className="bento-card-wrapper size-large">
-                <div className="bento-card-visual">
-                  <div className="mini-lead-list">
-                    <div className="lead-row active">
-                      <div className="lead-row-info">
-                        <strong>Marcus Sterling</strong>
-                        <span>Deep Clean • SW1A 1AA</span>
-                      </div>
-                      <span className="pill status-new">new</span>
-                    </div>
-                    <div className="lead-row">
-                      <div className="lead-row-info">
-                        <strong>Janet Vance</strong>
-                        <span>Weekly Maid • W1B 2BC</span>
-                      </div>
-                      <span className="pill status-contacted">contacted</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="bento-card-content">
-                  <h3>Centralized Lead Logging</h3>
-                  <p>A unified feed displaying parsed enquiries, phone numbers, postal codes, and customer booking intent captured by the widget.</p>
-                </div>
-              </div>
-
-              {/* Card 2: Human Review (Small) */}
-              <div className="bento-card-wrapper size-small">
-                <div className="bento-card-visual">
-                  <div className="escalation-alert-indicator">
-                    <span className="pulse-alert-dot"></span>
-                    <span className="alert-text">Review Required</span>
-                  </div>
-                </div>
-                <div className="bento-card-content">
-                  <h3>Proactive Flagging</h3>
-                  <p>Alerts owners to step in when client questions deviate from standard service parameters.</p>
-                </div>
-              </div>
-            </div>
+            <MagicBento
+              cards={inboxCards}
+              textAutoHide={false}
+              enableStars={false}
+              enableSpotlight={true}
+              enableBorderGlow={true}
+              enableTilt={true}
+              enableMagnetism={false}
+              clickEffect={true}
+              spotlightRadius={300}
+              particleCount={6}
+              glowColor="37, 99, 235"
+              disableAnimations={false}
+            />
           </section>
 
           {/* SECTION 4: Automation */}
-          <section id="automation" className="automation-details-section scroll-section">
+          <section id="automation" className="automation-details-section scroll-section bento-section">
             <div className="section-header">
               <span className="section-tag">Failsafe Actions</span>
               <h2>Configured Knowledge & Validation</h2>
               <p>Keep responses consistent with your business policies. The assistant uses your exact pricing rules.</p>
             </div>
 
-            <div className="bento-grid-custom">
-              {/* Card 3: Booking Checklist (Medium) */}
-              <div className="bento-card-wrapper size-medium">
-                <div className="bento-card-visual">
-                  <div className="mini-checklist-box">
-                    <div className="chk-row checked">✓ Name: Marcus Sterling</div>
-                    <div className="chk-row checked">✓ Service: End of Tenancy</div>
-                    <div className="chk-row checked">✓ Date: Next Friday</div>
-                    <div className="chk-row empty">☐ Address: Pending</div>
-                  </div>
-                </div>
-                <div className="bento-card-content">
-                  <h3>Attributes Extraction</h3>
-                  <p>Guarantees that no booking is submitted without crucial details like names, active postcodes, and phone details.</p>
-                </div>
-              </div>
-
-              {/* Card 4: Service Catalog (Medium) */}
-              <div className="bento-card-wrapper size-medium">
-                <div className="bento-card-visual">
-                  <div className="mini-kb-box">
-                    <div className="kb-item">
-                      <strong>Standard Office Cleaning</strong>
-                      <span>£22/hr base rate • Monday - Friday</span>
-                    </div>
-                    <div className="kb-item">
-                      <strong>Domestic Deep Clean</strong>
-                      <span>£180 base rate • Multi-room catalog</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="bento-card-content">
-                  <h3>Service Knowledge Base</h3>
-                  <p>Configure pricing rules, service limits, and standard answers so the widget provides accurate information.</p>
-                </div>
-              </div>
-            </div>
+            <MagicBento
+              cards={automationCards}
+              textAutoHide={false}
+              enableStars={false}
+              enableSpotlight={true}
+              enableBorderGlow={true}
+              enableTilt={true}
+              enableMagnetism={false}
+              clickEffect={true}
+              spotlightRadius={300}
+              particleCount={6}
+              glowColor="37, 99, 235"
+              disableAnimations={false}
+            />
           </section>
 
           {/* SECTION 5: Dashboard Workspace Showcase */}
