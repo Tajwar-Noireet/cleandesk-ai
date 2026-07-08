@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import Logo from './Logo';
 
 const Sidebar = () => {
   const navigate = useNavigate();
@@ -38,8 +39,9 @@ const Sidebar = () => {
         navigate('/login');
       } catch (err) {
         console.error('❌ Signout failed:', err.message);
-        navigate('/');
       }
+    } else {
+      navigate('/login');
     }
   };
 
@@ -48,9 +50,8 @@ const Sidebar = () => {
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
-        <Link to="/" className="sidebar-logo">
-          <span className="logo-icon" style={{ color: '#2563EB', marginRight: '0.2rem' }}>✨</span>
-          <span className="logo-text" style={{ fontFamily: 'var(--font-heading)', fontWeight: '700' }}>CleanDesk</span>
+        <Link to="/" className="sidebar-logo" style={{ display: 'inline-flex', alignItems: 'center' }}>
+          <Logo size={22} dark={true} />
         </Link>
       </div>
       <nav className="sidebar-nav">

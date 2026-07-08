@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import Logo from '../components/Logo';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -111,9 +112,8 @@ const Login = () => {
       {/* Left side: Branding and Marketing Panel */}
       <section className="auth-left-panel">
         <div className="auth-logo-row">
-          <Link to="/" className="auth-brand-text">
-            <span style={{ color: '#2563EB', fontSize: '1.6rem', marginRight: '0.2rem' }}>✨</span>
-            <span style={{ fontFamily: 'var(--font-heading)', fontWeight: '700' }}>CleanDesk</span>
+          <Link to="/" className="auth-brand-text" style={{ display: 'inline-flex', alignItems: 'center' }}>
+            <Logo size={28} dark={false} />
           </Link>
         </div>
 
