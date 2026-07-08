@@ -6,6 +6,7 @@ import StatCard from '../components/StatCard';
 import { api } from '../services/api';
 import { supabase } from '../supabaseClient';
 import { fadeUp, staggerContainer } from '../utils/motionPresets';
+import { InboxIcon, ClockIcon, AlertIcon, MessageIcon, CheckIcon } from '../components/Icons';
 
 const Dashboard = () => {
   const [leads, setLeads] = useState([]);
@@ -107,7 +108,7 @@ const Dashboard = () => {
               {(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_URL !== 'https://your-project.supabase.co') ? 'Supabase Live' : 'Offline Mock'}
             </div>
             <button className="btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', cursor: 'pointer' }} onClick={handleSignOut}>
-              🚪 Logout
+              Logout
             </button>
           </div>
         </motion.header>
@@ -117,7 +118,7 @@ const Dashboard = () => {
           <StatCard 
             title="Total Leads" 
             value={totalLeads} 
-            icon="🎯" 
+            icon={<InboxIcon size={20} />} 
             badgeText="+14% this week" 
             badgeType="positive"
             description="Leads captured by AI"
@@ -125,7 +126,7 @@ const Dashboard = () => {
           <StatCard 
             title="New Leads" 
             value={newLeads} 
-            icon="🆕" 
+            icon={<ClockIcon size={20} />} 
             badgeText={newLeads > 0 ? "Needs action" : "All clear"} 
             badgeType={newLeads > 0 ? "warning" : "positive"}
             description="Awaiting business review"
@@ -133,7 +134,7 @@ const Dashboard = () => {
           <StatCard 
             title="Human Review Required" 
             value={needsReview} 
-            icon="⚠️" 
+            icon={<AlertIcon size={20} />} 
             badgeText={needsReview > 0 ? "Urgent" : "Healthy"} 
             badgeType={needsReview > 0 ? "danger" : "positive"}
             description="Conversations flagged for owner"
@@ -141,7 +142,7 @@ const Dashboard = () => {
           <StatCard 
             title="Avg AI Confidence" 
             value={`${Math.round(avgConfidence * 100)}%`} 
-            icon="🤖" 
+            icon={<MessageIcon size={20} />} 
             badgeText="Stable" 
             badgeType="positive"
             description="NLP accuracy rating"
@@ -182,9 +183,13 @@ const Dashboard = () => {
                       <p>Confidence: {Math.round(conv.ai_confidence * 100)}%</p>
                     </div>
                     {conv.needs_human_review ? (
-                      <span className="status-pill danger">🚨 Flagged</span>
+                      <span className="status-pill danger" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                        <AlertIcon size={12} /> Flagged
+                      </span>
                     ) : (
-                      <span className="status-pill success">🤖 Managed</span>
+                      <span className="status-pill success" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                        <CheckIcon size={12} /> Managed
+                      </span>
                     )}
                   </div>
                 ))}

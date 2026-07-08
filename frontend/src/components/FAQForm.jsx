@@ -22,7 +22,7 @@ const FAQForm = ({ faq, onSubmit, onCancel }) => {
 
   return (
     <form className="faq-form" onSubmit={handleSubmit}>
-      <h3 className="form-title">{faq ? '✏️ Edit FAQ' : '➕ Add New FAQ'}</h3>
+      <h3 className="form-title">{faq ? 'Edit FAQ' : 'Add New FAQ'}</h3>
       
       <div className="form-group">
         <label className="form-label">Question *</label>

@@ -33,7 +33,7 @@ const ServiceForm = ({ service, onSubmit, onCancel }) => {
 
   return (
     <form className="service-form" onSubmit={handleSubmit}>
-      <h3 className="form-title">{service ? '✏️ Edit Service' : '➕ Add New Service'}</h3>
+      <h3 className="form-title">{service ? 'Edit Service' : 'Add New Service'}</h3>
       
       <div className="form-group">
         <label className="form-label">Service Name *</label>

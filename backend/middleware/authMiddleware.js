@@ -11,7 +11,11 @@ const authMiddleware = async (req, res, next) => {
   if (!authHeader) {
     // If running in Mock Mode, assign a dummy user
     if (!isSupabaseConfigured()) {
-      req.user = { id: 'mock-user-123', email: 'owner@sparklehome.co.uk' };
+      if (req.originalUrl && req.originalUrl.includes('/api/customer')) {
+        req.user = { id: 'mock-customer-sarah-uuid', email: 'sarah@jenkins.com' };
+      } else {
+        req.user = { id: 'mock-user-123', email: 'owner@sparklehome.co.uk' };
+      }
       return next();
     }
     return res.status(401).json({ error: 'No authorization header provided' });
@@ -23,6 +27,10 @@ const authMiddleware = async (req, res, next) => {
     // Mock validation
     if (token === 'mock-token') {
       req.user = { id: 'mock-user-123', email: 'owner@sparklehome.co.uk' };
+      return next();
+    }
+    if (token === 'mock-customer-token') {
+      req.user = { id: 'mock-customer-sarah-uuid', email: 'sarah@jenkins.com' };
       return next();
     }
     return res.status(401).json({ error: 'Invalid token (Mock Mode)' });

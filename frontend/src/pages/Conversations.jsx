@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import ConversationCard from '../components/ConversationCard';
 import { api } from '../services/api';
+import { ClockIcon, ShieldIcon, CheckIcon, MessageIcon, InboxIcon, UserIcon, AlertIcon, CalendarIcon } from '../components/Icons';
 
 const Conversations = () => {
   const [conversations, setConversations] = useState([]);
@@ -109,7 +110,9 @@ const Conversations = () => {
                       Confidence: {Math.round(activeTranscript.ai_confidence * 100)}%
                     </span>
                     {activeTranscript.needs_human_review && (
-                      <span className="escalation-alert-pill">⚠️ Escalated</span>
+                      <span className="escalation-alert-pill" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                        <AlertIcon size={12} /> Escalated
+                      </span>
                     )}
                   </div>
                 </div>
@@ -118,26 +121,28 @@ const Conversations = () => {
                 {activeTranscript.lead && (
                   <div className="transcript-lead-progress-panel">
                     <div className="progress-panel-header">
-                      <span>🎯 Lead Capture Checklist</span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                        <InboxIcon size={12} /> Lead Capture Checklist
+                      </span>
                       <span className={`status-pill ${activeTranscript.lead.status}`}>
                         {activeTranscript.lead.status}
                       </span>
                     </div>
                     <div className="progress-panel-slots">
-                      <span className={`progress-slot ${activeTranscript.lead.customer_name ? 'filled' : 'empty'}`}>
-                        👤 Name: {activeTranscript.lead.customer_name || 'Missing'}
+                      <span className={`progress-slot ${activeTranscript.lead.customer_name ? 'filled' : 'empty'}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                        <UserIcon size={12} /> Name: {activeTranscript.lead.customer_name || 'Missing'}
                       </span>
-                      <span className={`progress-slot ${activeTranscript.lead.customer_phone ? 'filled' : 'empty'}`}>
-                        📞 Phone: {activeTranscript.lead.customer_phone || 'Missing'}
+                      <span className={`progress-slot ${activeTranscript.lead.customer_phone ? 'filled' : 'empty'}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                        <UserIcon size={12} /> Phone: {activeTranscript.lead.customer_phone || 'Missing'}
                       </span>
-                      <span className={`progress-slot ${activeTranscript.lead.address ? 'filled' : 'empty'}`}>
-                        📍 Address: {activeTranscript.lead.address || 'Missing'}
+                      <span className={`progress-slot ${activeTranscript.lead.address ? 'filled' : 'empty'}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                        <ShieldIcon size={12} /> Address: {activeTranscript.lead.address || 'Missing'}
                       </span>
-                      <span className={`progress-slot ${activeTranscript.lead.service_type ? 'filled' : 'empty'}`}>
-                        🧹 Service: {activeTranscript.lead.service_type || 'Missing'}
+                      <span className={`progress-slot ${activeTranscript.lead.service_type ? 'filled' : 'empty'}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                        <CheckIcon size={12} /> Service: {activeTranscript.lead.service_type || 'Missing'}
                       </span>
-                      <span className={`progress-slot ${activeTranscript.lead.preferred_date ? 'filled' : 'empty'}`}>
-                        📅 Date: {activeTranscript.lead.preferred_date || 'Missing'}
+                      <span className={`progress-slot ${activeTranscript.lead.preferred_date ? 'filled' : 'empty'}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                        <CalendarIcon size={12} /> Date: {activeTranscript.lead.preferred_date || 'Missing'}
                       </span>
                     </div>
                   </div>
@@ -150,8 +155,8 @@ const Conversations = () => {
                   ) : (
                     activeTranscript.messages.map(msg => (
                       <div key={msg.id} className={`transcript-message-row ${msg.sender}`}>
-                        <div className="transcript-avatar">
-                          {msg.sender === 'customer' ? '👤' : msg.sender === 'ai' ? '🤖' : '🔑'}
+                        <div className="transcript-avatar" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                          {msg.sender === 'customer' ? <UserIcon size={14} /> : msg.sender === 'ai' ? <MessageIcon size={14} /> : <ShieldIcon size={14} />}
                         </div>
                         <div className="transcript-bubble">
                           <div className="bubble-sender-name">

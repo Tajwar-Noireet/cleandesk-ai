@@ -1,10 +1,11 @@
 import React from 'react';
+import { AlertIcon } from './Icons';
 
 const ConversationCard = ({ conversation, isActive, onClick }) => {
   const getConfidenceColor = (score) => {
-    if (score >= 0.8) return '#22c55e'; // Green
-    if (score >= 0.6) return '#eab308'; // Yellow
-    return '#ef4444'; // Red
+    if (score >= 0.8) return '#16A34A'; // Green
+    if (score >= 0.6) return '#D97706'; // Yellow
+    return '#DC2626'; // Red
   };
 
   return (
@@ -32,7 +33,9 @@ const ConversationCard = ({ conversation, isActive, onClick }) => {
         </span>
         
         {conversation.needs_human_review && (
-          <span className="review-badge animate-pulse">⚠️ Needs Review</span>
+          <span className="review-badge animate-pulse" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+            <AlertIcon size={12} /> Needs Review
+          </span>
         )}
       </div>
     </div>

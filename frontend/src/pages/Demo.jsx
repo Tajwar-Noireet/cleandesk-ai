@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import ChatWidget from '../components/ChatWidget';
 import { api } from '../services/api';
+import { StatusDotIcon, ShieldIcon, UserIcon, ClockIcon } from '../components/Icons';
 
 const Demo = () => {
   const [business, setBusiness] = useState(null);
@@ -47,19 +48,25 @@ const Demo = () => {
         <div className="demo-grid-container">
           {/* Business Info Column */}
           <div className="demo-business-info">
-            <span className="demo-tag">🟢 LIVE DEMO ENVIRONMENT</span>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.8rem' }}>
+              <StatusDotIcon size={8} color="#16A34A" pulse={true} />
+              <span className="demo-tag" style={{ margin: 0 }}>LIVE DEMO ENVIRONMENT</span>
+            </div>
             <h1 className="demo-business-title">{business?.name}</h1>
             <p className="demo-business-description">{business?.description}</p>
             
             <div className="demo-details-list">
-              <div className="demo-detail-item">
-                <strong>📍 Service Area:</strong> {business?.service_area}
+              <div className="demo-detail-item" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <ShieldIcon size={12} />
+                <span><strong>Service Area:</strong> {business?.service_area}</span>
               </div>
-              <div className="demo-detail-item">
-                <strong>📞 Phone:</strong> {business?.phone}
+              <div className="demo-detail-item" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <UserIcon size={12} />
+                <span><strong>Phone:</strong> {business?.phone}</span>
               </div>
-              <div className="demo-detail-item">
-                <strong>🕒 Hours:</strong> {business?.opening_hours}
+              <div className="demo-detail-item" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <ClockIcon size={12} />
+                <span><strong>Hours:</strong> {business?.opening_hours}</span>
               </div>
             </div>
 

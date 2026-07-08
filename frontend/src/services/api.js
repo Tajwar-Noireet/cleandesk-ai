@@ -274,5 +274,108 @@ export const api = {
         ]
       };
     }
+  },
+
+  // Customer Portal Endpoints
+  customerGetDashboard: async () => {
+    try {
+      return await apiCall('/api/customer/dashboard');
+    } catch {
+      // Simulate dashboard response for Mock Mode
+      return {
+        leads: frontendFallbackData.leads,
+        conversations: frontendFallbackData.conversations,
+        business: frontendFallbackData.business,
+        user: { id: 'mock-customer-sarah-uuid', email: 'sarah@jenkins.com' }
+      };
+    }
+  },
+  customerGetConversations: async () => {
+    try {
+      return await apiCall('/api/customer/conversations');
+    } catch {
+      return frontendFallbackData.conversations;
+    }
+  },
+  customerGetConversationDetail: async (id) => {
+    try {
+      return await apiCall(`/api/customer/conversations/${id}`);
+    } catch {
+      return {
+        id,
+        customer_name: 'Sarah Jenkins',
+        customer_phone: '+44 7700 900077',
+        customer_email: 'sarah@jenkins.com',
+        status: 'open',
+        messages: [
+          { id: 'm1', sender: 'customer', content: 'Hi, do you cover Wembley area?', created_at: new Date().toISOString() },
+          { id: 'm2', sender: 'ai', content: 'Hello! Yes, we cover Greater London including Wembley.', created_at: new Date().toISOString() }
+        ]
+      };
+    }
+  },
+  customerGetBookings: async () => {
+    try {
+      return await apiCall('/api/customer/bookings');
+    } catch {
+      return frontendFallbackData.leads;
+    }
+  },
+  customerUpdateProfile: async (profileData) => {
+    try {
+      return await apiCall('/api/customer/profile', {
+        method: 'PUT',
+        body: JSON.stringify(profileData)
+      });
+    } catch {
+      const { customer_name, customer_phone, address } = profileData;
+      frontendFallbackData.leads.forEach((l, i) => {
+        frontendFallbackData.leads[i].customer_name = customer_name;
+        frontendFallbackData.leads[i].customer_phone = customer_phone;
+        frontendFallbackData.leads[i].address = address;
+      });
+      return { success: true, ...profileData };
+    }
+  },
+  customerRequestReschedule: async (leadId, notes) => {
+    try {
+      return await apiCall('/api/customer/request-update', {
+        method: 'PUT',
+        body: JSON.stringify({ leadId, notes })
+      });
+    } catch {
+      const idx = frontendFallbackData.leads.findIndex(l => l.id === leadId);
+      if (idx !== -1) {
+        frontendFallbackData.leads[idx].notes = `${frontendFallbackData.leads[idx].notes || ''}\n[Customer Reschedule Request]: ${notes}`.trim();
+        return frontendFallbackData.leads[idx];
+      }
+      return null;
+    }
+  },
+
+  // Public booking submission - no auth required; token sent if present for uplift
+  customerCreateEnquiry: async (enquiryData) => {
+    try {
+      return await apiCall('/api/customer/enquiries', {
+        method: 'POST',
+        body: JSON.stringify(enquiryData)
+      });
+    } catch {
+      // Offline mock fallback: simulate a successful submission
+      const mockLead = {
+        id: `l-mock-${Date.now()}`,
+        ...enquiryData,
+        status: 'new',
+        created_at: new Date().toISOString()
+      };
+      frontendFallbackData.leads.unshift(mockLead);
+      return {
+        success: true,
+        lead_id: mockLead.id,
+        conversation_id: `c-mock-${Date.now()}`,
+        customer_email: enquiryData.customer_email,
+        authenticated: false
+      };
+    }
   }
 };

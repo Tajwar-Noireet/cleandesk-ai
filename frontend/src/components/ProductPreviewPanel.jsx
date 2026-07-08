@@ -1,4 +1,5 @@
 import React from 'react';
+import { ClockIcon, ShieldIcon, CheckIcon, MessageIcon, UserIcon } from './Icons';
 
 const ProductPreviewPanel = () => {
   const mockLeads = [
@@ -11,11 +12,21 @@ const ProductPreviewPanel = () => {
     <div className="product-preview-panel">
       {/* Sidebar Mock */}
       <div className="mock-sidebar">
-        <div className="mock-logo">✨ CleanDesk</div>
-        <div className="mock-nav-item active">📊 Overview</div>
-        <div className="mock-nav-item">🏢 Setup</div>
-        <div className="mock-nav-item">🛠️ Services</div>
-        <div className="mock-nav-item">💬 Chats</div>
+        <div className="mock-logo" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          CleanDesk
+        </div>
+        <div className="mock-nav-item active">
+          <ClockIcon size={12} /> Overview
+        </div>
+        <div className="mock-nav-item">
+          <ShieldIcon size={12} /> Setup
+        </div>
+        <div className="mock-nav-item">
+          <CheckIcon size={12} /> Services
+        </div>
+        <div className="mock-nav-item">
+          <MessageIcon size={12} /> Chats
+        </div>
       </div>
 
       {/* Main Workspace Mock */}
@@ -72,9 +83,15 @@ const ProductPreviewPanel = () => {
             <div className="extracted-fields-box">
               <div className="extracted-hdr">Captured Attributes</div>
               <div className="slots-grid-mini">
-                <span className="slot checked">👤 Name: Thomas More</span>
-                <span className="slot checked">📞 Phone: 07700 900142</span>
-                <span className="slot checked">📍 Carpet: Added (£45)</span>
+                <span className="slot checked" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                  <UserIcon size={12} /> Name: Thomas More
+                </span>
+                <span className="slot checked" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                  <UserIcon size={12} /> Phone: 07700 900142
+                </span>
+                <span className="slot checked" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                  <ShieldIcon size={12} /> Carpet: Added (£45)
+                </span>
               </div>
             </div>
           </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
+import { MessageIcon, AlertIcon, CheckIcon, InboxIcon } from './Icons';
 
 const ChatWidget = ({ businessId, demoMode = false }) => {
   const [isOpen, setIsOpen] = useState(true);
@@ -97,8 +98,8 @@ const ChatWidget = ({ businessId, demoMode = false }) => {
     <div className={`chat-widget-container ${isOpen ? 'open' : 'closed'}`}>
       {/* Floating Toggle Button */}
       {!isOpen && (
-        <button className="chat-widget-toggle" onClick={() => setIsOpen(true)}>
-          💬 Ask Assistant
+        <button className="chat-widget-toggle" onClick={() => setIsOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+          <MessageIcon size={14} /> Ask Assistant
         </button>
       )}
 
@@ -106,7 +107,9 @@ const ChatWidget = ({ businessId, demoMode = false }) => {
         <div className="chat-window">
           <div className={`chat-header ${needsHumanReview ? 'review-warning' : ''}`}>
             <div className="chat-header-info">
-              <span className="chat-avatar">{needsHumanReview ? '⚠️' : '✨'}</span>
+              <span className="chat-avatar" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                {needsHumanReview ? <AlertIcon size={16} /> : <CheckIcon size={16} />}
+              </span>
               <div>
                 <h4 className="chat-title">
                   {needsHumanReview ? 'Human Takeover Requested' : 'Operations Assistant'}
@@ -128,7 +131,7 @@ const ChatWidget = ({ businessId, demoMode = false }) => {
                   {msg.content}
                   {msg.confidence !== undefined && (
                     <span className="message-confidence">
-                      ✨ {Math.round(msg.confidence * 100)}%
+                      Confidence: {Math.round(msg.confidence * 100)}%
                     </span>
                   )}
                 </div>
@@ -164,7 +167,9 @@ const ChatWidget = ({ businessId, demoMode = false }) => {
           {demoMode && (
             <div className="demo-inspector">
               <div className="inspector-header-row">
-                <h5>🔍 Lead Capture Progress</h5>
+                <h5 style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', margin: 0 }}>
+                  <InboxIcon size={12} /> Lead Capture Progress
+                </h5>
                 <span className="inspector-percentage">
                   {Math.round(
                     ((['customer_name', 'customer_phone', 'address', 'service_type', 'preferred_date'].filter(

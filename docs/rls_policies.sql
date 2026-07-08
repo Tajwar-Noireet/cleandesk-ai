@@ -99,3 +99,44 @@ CREATE POLICY "Owners can CRUD own messages" ON messages
       )
     )
   );
+
+-- 8. Customer isolation policies (for retail clients)
+CREATE POLICY "Customers can select own leads" ON leads
+  FOR SELECT
+  TO authenticated
+  USING (customer_user_id = auth.uid() OR customer_email = auth.email());
+
+CREATE POLICY "Customers can update own leads" ON leads
+  FOR UPDATE
+  TO authenticated
+  USING (customer_user_id = auth.uid() OR customer_email = auth.email())
+  WITH CHECK (customer_user_id = auth.uid() OR customer_email = auth.email());
+
+CREATE POLICY "Customers can select own conversations" ON conversations
+  FOR SELECT
+  TO authenticated
+  USING (customer_user_id = auth.uid() OR customer_email = auth.email());
+
+CREATE POLICY "Customers can update own conversations" ON conversations
+  FOR UPDATE
+  TO authenticated
+  USING (customer_user_id = auth.uid() OR customer_email = auth.email())
+  WITH CHECK (customer_user_id = auth.uid() OR customer_email = auth.email());
+
+CREATE POLICY "Customers can select own messages" ON messages
+  FOR SELECT
+  TO authenticated
+  USING (
+    conversation_id IN (
+      SELECT id FROM conversations WHERE customer_user_id = auth.uid() OR customer_email = auth.email()
+    )
+  );
+
+CREATE POLICY "Customers can insert own messages" ON messages
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    conversation_id IN (
+      SELECT id FROM conversations WHERE customer_user_id = auth.uid() OR customer_email = auth.email()
+    )
+  );

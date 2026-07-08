@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import Logo from './Logo';
+import { ClockIcon, ShieldIcon, CheckIcon, MessageIcon, InboxIcon, ArrowRightIcon } from './Icons';
 
 const Sidebar = () => {
   const navigate = useNavigate();
@@ -56,27 +57,27 @@ const Sidebar = () => {
       </div>
       <nav className="sidebar-nav">
         <NavLink to="/dashboard" end className={({ isActive }) => isActive ? "sidebar-item active" : "sidebar-item"}>
-          <span className="sidebar-item-icon">📊</span>
+          <span className="sidebar-item-icon"><ClockIcon size={16} /></span>
           Overview
         </NavLink>
         <NavLink to="/dashboard/business" className={({ isActive }) => isActive ? "sidebar-item active" : "sidebar-item"}>
-          <span className="sidebar-item-icon">🏢</span>
+          <span className="sidebar-item-icon"><ShieldIcon size={16} /></span>
           Business Setup
         </NavLink>
         <NavLink to="/dashboard/services" className={({ isActive }) => isActive ? "sidebar-item active" : "sidebar-item"}>
-          <span className="sidebar-item-icon">🛠️</span>
+          <span className="sidebar-item-icon"><CheckIcon size={16} /></span>
           Services Manager
         </NavLink>
         <NavLink to="/dashboard/faqs" className={({ isActive }) => isActive ? "sidebar-item active" : "sidebar-item"}>
-          <span className="sidebar-item-icon">❓</span>
+          <span className="sidebar-item-icon"><MessageIcon size={16} /></span>
           FAQ Manager
         </NavLink>
         <NavLink to="/dashboard/leads" className={({ isActive }) => isActive ? "sidebar-item active" : "sidebar-item"}>
-          <span className="sidebar-item-icon">🎯</span>
+          <span className="sidebar-item-icon"><InboxIcon size={16} /></span>
           Leads Feed
         </NavLink>
         <NavLink to="/dashboard/conversations" className={({ isActive }) => isActive ? "sidebar-item active" : "sidebar-item"}>
-          <span className="sidebar-item-icon">💬</span>
+          <span className="sidebar-item-icon"><MessageIcon size={16} /></span>
           Conversations
         </NavLink>
       </nav>
@@ -91,7 +92,7 @@ const Sidebar = () => {
           </div>
         )}
         <Link to="/" className="sidebar-logout" onClick={handleSignOut}>
-          <span className="sidebar-item-icon">🚪</span>
+          <span className="sidebar-item-icon"><ArrowRightIcon size={16} /></span>
           Sign Out
         </Link>
       </div>

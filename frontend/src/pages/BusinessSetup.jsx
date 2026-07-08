@@ -14,6 +14,7 @@ const BusinessSetup = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState('');
 
   useEffect(() => {
     const loadBusiness = async () => {
@@ -57,20 +58,24 @@ const BusinessSetup = () => {
       if (isSupabaseConfigured) {
         if (businessId) {
           await api.updateBusiness(businessId, payload);
-          setMessage('✅ Business profile updated successfully!');
+          setMessage('Business profile updated successfully!');
+          setMessageType('success');
         } else {
           const newB = await api.createBusiness(payload);
           setBusinessId(newB.id);
-          setMessage('✅ Business profile created successfully!');
+          setMessage('Business profile created successfully!');
+          setMessageType('success');
         }
       } else {
         // Mock Mode: update the demo business
         await api.updateBusiness(api.getDemoBusinessId(), payload);
-        setMessage('✅ Business profile updated successfully! (Mock Mode)');
+        setMessage('Business profile updated successfully! (Mock Mode)');
+        setMessageType('success');
       }
     } catch (err) {
       console.error(err);
-      setMessage('❌ Failed to save profile.');
+      setMessage('Failed to save profile.');
+      setMessageType('error');
     } finally {
       setIsSaving(false);
     }
@@ -103,7 +108,7 @@ const BusinessSetup = () => {
             <p>The AI Receptionist references these fields to answer user inquiries about coverage, availability, and business info.</p>
           </div>
 
-          {message && <div className={`form-message-alert ${message.startsWith('✅') ? 'success' : 'error'}`}>{message}</div>}
+          {message && <div className={`form-message-alert ${messageType}`}>{message}</div>}
 
           <form className="business-setup-form" onSubmit={handleSave}>
             <div className="form-group">
