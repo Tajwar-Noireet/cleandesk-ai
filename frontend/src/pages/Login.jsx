@@ -112,7 +112,7 @@ const Login = () => {
       <section className="auth-left-panel">
         <div className="auth-logo-row">
           <Link to="/" className="auth-brand-text">
-            <span style={{ color: '#C87941', fontSize: '1.6rem', marginRight: '0.2rem' }}>✨</span>
+            <span style={{ color: '#2563EB', fontSize: '1.6rem', marginRight: '0.2rem' }}>✨</span>
             <span style={{ fontFamily: 'var(--font-heading)', fontWeight: '700' }}>CleanDesk</span>
           </Link>
         </div>
@@ -121,7 +121,7 @@ const Login = () => {
         <div className="auth-product-preview-container">
           <div className="auth-preview-card mini-inbox-card animate-float-1">
             <div className="preview-card-header">
-              <span className="dot" style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#C87941', marginRight: '0.4rem' }}></span>
+              <span className="dot" style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#2563EB', marginRight: '0.4rem' }}></span>
               <strong>Active Customer Enquiry</strong>
             </div>
             <p className="preview-card-body">"I need an end of tenancy clean for my 2-bed apartment next Wednesday. Do you provide supplies?"</p>
@@ -129,7 +129,7 @@ const Login = () => {
 
           <div className="auth-preview-card lead-checklist-card animate-float-2">
             <div className="preview-card-header">
-              <strong style={{ color: '#1F4E45' }}>📋 Automated Capture Checklist</strong>
+              <strong style={{ color: '#0A0A0A' }}>📋 Automated Capture Checklist</strong>
             </div>
             <div className="checklist-items">
               <span className="check-item-span check-filled">✓ Service: End of Tenancy</span>
@@ -140,7 +140,7 @@ const Login = () => {
 
           <div className="auth-preview-card booking-outcome-card animate-float-3">
             <div className="preview-card-header">
-              <span className="dot" style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#15803D', marginRight: '0.4rem' }}></span>
+              <span className="dot" style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#16A34A', marginRight: '0.4rem' }}></span>
               <strong>Operation Outcome</strong>
             </div>
             <p className="preview-card-body">Lead qualified & saved. Ticket created in Owner CRM.</p>

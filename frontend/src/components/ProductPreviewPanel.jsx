@@ -35,7 +35,7 @@ const ProductPreviewPanel = () => {
           <div className="mock-card">
             <div className="card-header-row">
               <h4>Recent Customer Operations</h4>
-              <span className="live-tag"><span className="dot pulse" style={{ backgroundColor: '#15803D', boxShadow: '0 0 8px #15803D' }}></span> Live Feed</span>
+              <span className="live-tag"><span className="dot pulse" style={{ backgroundColor: '#16A34A', boxShadow: '0 0 8px #16A34A' }}></span> Live Feed</span>
             </div>
             <div className="mock-table">
               <div className="table-hdr">
@@ -61,7 +61,7 @@ const ProductPreviewPanel = () => {
           {/* Transcript review */}
           <div className="mock-card card-transcript">
             <div className="card-header-row">
-              <h4>AI Receptionist Audit</h4>
+              <h4>Conversational Audit</h4>
               <span className="badge-confidence">96% Accuracy</span>
             </div>
             <div className="transcript-chat-history">

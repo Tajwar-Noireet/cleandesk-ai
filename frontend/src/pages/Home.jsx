@@ -20,7 +20,7 @@ const Home = () => {
           <span className="text-glow-gradient">into booked jobs.</span>
         </h1>
         <p className="hero-mega-subtitle">
-          CleanDesk helps service businesses respond instantly, capture structured leads, and manage client communications in a unified workspace.
+          CleanDesk gives service businesses one calm workspace to respond faster, qualify leads, and keep every customer conversation under control.
         </p>
         <div className="hero-button-row">
           <Link to="/demo" className="btn-primary btn-large font-semibold">
@@ -67,7 +67,7 @@ const Home = () => {
                 </div>
                 <div className="inbox-item-mini reply">
                   <div className="inbox-hdr">
-                    <span className="text-cyan">✨ CleanDesk Response</span>
+                    <span style={{ color: '#2563EB' }}>✨ CleanDesk Response</span>
                     <span className="status-pill booked">sent</span>
                   </div>
                   <p>"Yes, we have standard deep cleaners available on Friday at 10 AM. Can I have your name and phone?"</p>
@@ -202,8 +202,8 @@ const Home = () => {
 
       <footer className="landing-footer">
         <div className="footer-content">
-          <span>CleanDesk AI • Operating System for Service Businesses</span>
-          <span>&copy; {new Date().getFullYear()} CleanDesk AI. All rights reserved.</span>
+          <span>CleanDesk • Operating System for Service Businesses</span>
+          <span>&copy; {new Date().getFullYear()} CleanDesk. All rights reserved.</span>
         </div>
       </footer>
     </div>
