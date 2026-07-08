@@ -170,9 +170,8 @@ const Conversations = () => {
               </div>
             ) : (
               <div className="transcript-empty-state">
-                <span className="empty-state-icon">💬</span>
                 <h3>Select a conversation</h3>
-                <p>Choose a contact row on the left to see the message transcript history between the customer and AI Receptionist.</p>
+                <p>Choose a contact row on the left to see the message transcript history between the customer and Assistant.</p>
               </div>
             )}
           </div>

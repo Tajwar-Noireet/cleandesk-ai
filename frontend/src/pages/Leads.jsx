@@ -79,7 +79,6 @@ const Leads = () => {
         <div className="leads-container">
           {filteredLeads.length === 0 ? (
             <div className="empty-state">
-              <span className="empty-state-icon">🎯</span>
               <h3>No leads found</h3>
               <p>Leads captured from the chatbot demo or client integrations will populate here.</p>
             </div>

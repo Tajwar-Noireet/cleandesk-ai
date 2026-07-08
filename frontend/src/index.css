@@ -2,33 +2,71 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* Color Palette (Monochrome Premium B2B SaaS) */
-  --primary: #111111;
-  --primary-hover: #1f1f1f;
-  --secondary: #FFFFFF;
-  --secondary-hover: #F1F1EF;
-  --accent: #2563EB;
-  --accent-hover: #1d4ed8;
-  
-  --bg-dark: #0B0B0C;
-  --bg-light: #F8F8F7;
-  --card-dark: #0B0B0C;
-  --card-light: #FFFFFF;
-  --border-dark: #2A2A2B;
-  --border-light: #E5E7EB;
-  
-  --text-dark-primary: #F3F4F6;
-  --text-dark-secondary: #9CA3AF;
-  --text-light-primary: #0A0A0A;
-  --text-light-secondary: #6B7280;
+  /* Primitive Tokens */
+  --color-gray-50:  #F8F8F7;
+  --color-gray-100: #F1F1EF;
+  --color-gray-200: #E5E7EB;
+  --color-gray-400: #9CA3AF;
+  --color-gray-600: #6B7280;
+  --color-gray-900: #111111;
+  --color-gray-950: #0A0A0A;
+  --color-blue-600: #2563EB;
+  --color-green-600: #16A34A;
+  --color-orange-600: #D97706;
+  --color-red-600: #DC2626;
 
-  --success: #16A34A;
-  --warning: #D97706;
-  --danger: #DC2626;
+  /* Semantic Tokens */
+  --color-background: var(--color-gray-50);
+  --color-surface: var(--color-gray-100);
+  --color-canvas: #FFFFFF;
+  --color-text-main: var(--color-gray-950);
+  --color-text-muted: var(--color-gray-600);
+  --color-border: var(--color-gray-200);
+  --color-primary: var(--color-gray-900);
+  --color-accent: var(--color-blue-600);
+  --color-success: var(--color-green-600);
+  --color-warning: var(--color-orange-600);
+  --color-danger: var(--color-red-600);
 
+  /* Component Tokens */
+  --btn-primary-bg: var(--color-primary);
+  --btn-primary-text: #FFFFFF;
+  --btn-secondary-bg: #FFFFFF;
+  --btn-secondary-border: var(--color-border);
+  --btn-secondary-text: var(--color-text-main);
+  --card-bg: #FFFFFF;
+  --card-border: var(--color-border);
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --input-bg: #FFFFFF;
+  --input-border: var(--color-border);
+  --input-focus-border: var(--color-accent);
+  --input-focus-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+
+  /* Compatibility Aliases for Legacy Visual Theme Variables */
+  --primary: var(--color-primary);
+  --primary-hover: var(--color-gray-950);
+  --secondary: var(--color-surface);
+  --secondary-hover: var(--color-gray-200);
+  --accent: var(--color-accent);
+  --accent-hover: var(--color-blue-600);
+  --bg-light: var(--color-background);
+  --bg-dark: var(--color-gray-950);
+  --card-light: var(--color-canvas);
+  --card-dark: var(--color-gray-900);
+  --border-light: var(--color-border);
+  --border-dark: var(--color-gray-900);
+  --text-light-primary: var(--color-text-main);
+  --text-light-secondary: var(--color-text-muted);
+  --text-dark-primary: var(--color-gray-50);
+  --text-dark-secondary: var(--color-gray-400);
+  --success: var(--color-success);
+  --warning: var(--color-warning);
+  --danger: var(--color-danger);
+  --shadow: var(--card-shadow);
+
+  /* Helper styling variables */
   --font-sans: 'Inter', sans-serif;
   --font-heading: 'Inter Tight', 'Inter', sans-serif;
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
   --border-radius: 6px;
 }
 

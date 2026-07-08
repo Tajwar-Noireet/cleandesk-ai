@@ -99,9 +99,9 @@ const Home = () => {
           {/* Card 3: Owner Escalation Banner (1/3 width) */}
           <div className="bento-card">
             <div className="bento-card-visual bg-center-icon">
-              <div className="pulsing-escalation-preview">
-                <span className="icon">🚨</span>
-                <span className="text">Needs Human Review</span>
+              <div className="pulsing-escalation-preview" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <span className="dot pulse" style={{ display: 'inline-block', width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#DC2626', boxShadow: '0 0 10px #DC2626' }}></span>
+                <span className="text" style={{ fontSize: '0.75rem', fontWeight: '700', color: '#DC2626', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Needs Human Review</span>
               </div>
             </div>
             <div className="bento-card-content">

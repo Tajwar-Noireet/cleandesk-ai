@@ -116,13 +116,12 @@ const FAQManager = () => {
             <div className="faqs-grid-list">
               {faqs.length === 0 ? (
                 <div className="empty-state" style={{ padding: '3.5rem 2rem', textAlign: 'center', width: '100%' }}>
-                  <span style={{ fontSize: '2.5rem', marginBottom: '1rem', display: 'block' }}>❓</span>
                   <h3>No FAQs loaded</h3>
                   <p style={{ color: 'var(--text-light-secondary)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
-                    Add FAQs to train your AI receptionist on specific business policies and hours.
+                    Add FAQs to train your receptionist on specific business policies and hours.
                   </p>
                   <button className="btn-primary" onClick={() => setIsAdding(true)}>
-                    ➕ Add Your First FAQ
+                    Add Your First FAQ
                   </button>
                 </div>
               ) : (
