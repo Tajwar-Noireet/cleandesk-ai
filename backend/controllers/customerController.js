@@ -1,5 +1,6 @@
 const { mockStore } = require('../lib/mockStore');
 const { isSupabaseConfigured, supabase } = require('../lib/supabaseClient');
+const { generateReceptionistDraft } = require('../lib/aiReceptionist');
 
 const getUserEmail = (user) => (user?.email || '').trim().toLowerCase();
 
@@ -124,8 +125,125 @@ const getLastMessageMap = async (conversationIds) => {
       if (!map.has(message.conversation_id)) {
         map.set(message.conversation_id, message);
       }
-    });
+  });
   return map;
+};
+
+const safeUpdateConversationRecord = async (conversationId, updates) => {
+  const payload = {
+    ...updates,
+    updated_at: new Date().toISOString()
+  };
+
+  if (isSupabaseConfigured()) {
+    const { data, error } = await supabase
+      .from('conversations')
+      .update(payload)
+      .eq('id', conversationId)
+      .select();
+
+    if (!error) return data && data.length > 0 ? data[0] : null;
+
+    if (error.message && error.message.includes('updated_at')) {
+      const { data: retryData, error: retryError } = await supabase
+        .from('conversations')
+        .update(updates)
+        .eq('id', conversationId)
+        .select();
+      if (retryError) throw retryError;
+      return retryData && retryData.length > 0 ? retryData[0] : null;
+    }
+
+    throw error;
+  }
+
+  const index = mockStore.conversations.findIndex((conversation) => conversation.id === conversationId);
+  if (index === -1) return null;
+  mockStore.conversations[index] = { ...mockStore.conversations[index], ...payload };
+  return mockStore.conversations[index];
+};
+
+const safeUpdateLeadRecord = async (leadId, updates) => {
+  const payload = {
+    ...updates,
+    updated_at: new Date().toISOString()
+  };
+
+  if (isSupabaseConfigured()) {
+    const { data, error } = await supabase
+      .from('leads')
+      .update(payload)
+      .eq('id', leadId)
+      .select();
+
+    if (!error) return data && data.length > 0 ? data[0] : null;
+
+    if (error.message && error.message.includes('updated_at')) {
+      const { data: retryData, error: retryError } = await supabase
+        .from('leads')
+        .update(updates)
+        .eq('id', leadId)
+        .select();
+      if (retryError) throw retryError;
+      return retryData && retryData.length > 0 ? retryData[0] : null;
+    }
+
+    throw error;
+  }
+
+  const index = mockStore.leads.findIndex((lead) => lead.id === leadId);
+  if (index === -1) return null;
+  mockStore.leads[index] = { ...mockStore.leads[index], ...payload };
+  return mockStore.leads[index];
+};
+
+const createConversationMessage = async (conversationId, sender, content, metadata = null) => {
+  const cleanContent = String(content || '').trim();
+  if (!cleanContent) {
+    const err = new Error('Message content is required.');
+    err.status = 400;
+    throw err;
+  }
+
+  if (isSupabaseConfigured()) {
+    const payload = {
+      conversation_id: conversationId,
+      sender,
+      content: cleanContent,
+      ...(metadata ? { metadata } : {})
+    };
+
+    const { data, error } = await supabase
+      .from('messages')
+      .insert(payload)
+      .select()
+      .single();
+
+    if (!error) return data;
+
+    if (error.message && error.message.includes('metadata')) {
+      const { data: retryData, error: retryError } = await supabase
+        .from('messages')
+        .insert({ conversation_id: conversationId, sender, content: cleanContent })
+        .select()
+        .single();
+      if (retryError) throw retryError;
+      return retryData;
+    }
+
+    throw error;
+  }
+
+  const message = {
+    id: `m-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    conversation_id: conversationId,
+    sender,
+    content: cleanContent,
+    metadata: metadata || {},
+    created_at: new Date().toISOString()
+  };
+  mockStore.messages.push(message);
+  return message;
 };
 
 const enrichLead = (lead, businessMap) => {
@@ -237,6 +355,29 @@ exports.getCustomerDashboard = async (req, res) => {
 exports.getCustomerConversations = async (req, res) => {
   try {
     const records = await loadCustomerRecords(req.user);
+    
+    const convIds = records.conversations.map(c => c.id);
+    let totalMessages = 0;
+    if (convIds.length > 0) {
+      if (isSupabaseConfigured()) {
+        try {
+          const { count, error } = await supabase
+            .from('messages')
+            .select('*', { count: 'exact', head: true })
+            .in('conversation_id', convIds);
+          if (!error) totalMessages = count || 0;
+        } catch (e) {}
+      } else {
+        totalMessages = mockStore.messages.filter(m => convIds.includes(m.conversation_id)).length;
+      }
+    }
+
+    console.log('⚡ [DEV LOG - getCustomerConversations]:', JSON.stringify({
+      authenticated_customer_email: req.user?.email || null,
+      conversation_count: records.conversations.length,
+      message_count: totalMessages
+    }, null, 2));
+
     return res.json(records.conversations);
   } catch (err) {
     return res.status(err.status || 500).json({ error: err.message });
@@ -290,6 +431,7 @@ exports.getCustomerConversationDetail = async (req, res) => {
         .eq('conversation_id', id)
         .or(getCustomerIsolationFilter(user));
       if (leadErr) throw leadErr;
+
       lead = leadData && leadData.length > 0 ? leadData[0] : null;
     } else {
       conversation = mockStore.conversations.find((item) => item.id === id) || null;
@@ -327,6 +469,87 @@ exports.getCustomerConversationDetail = async (req, res) => {
       lead: lead ? enrichLead(lead, businessMap) : null,
       messages,
       ...toSafeBusiness(business)
+    });
+  } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message });
+  }
+};
+
+exports.sendCustomerConversationMessage = async (req, res) => {
+  try {
+    const user = req.user;
+    const { id } = req.params;
+    const { content } = req.body || {};
+
+    if (!user?.id || !user?.email) {
+      return res.status(401).json({ error: 'Unauthorized: Customer session missing' });
+    }
+
+    let conversation = null;
+    let lead = null;
+
+    if (isSupabaseConfigured()) {
+      const { data: conversations, error: convErr } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('id', id);
+      if (convErr) throw convErr;
+      conversation = conversations && conversations.length > 0 ? conversations[0] : null;
+
+      if (!conversation) return res.status(404).json({ error: 'Conversation not found' });
+      if (!matchesCustomer(conversation, user)) {
+        return res.status(403).json({ error: 'Forbidden: You do not own this conversation' });
+      }
+
+      const { data: leads, error: leadErr } = await supabase
+        .from('leads')
+        .select('*')
+        .eq('conversation_id', id)
+        .or(getCustomerIsolationFilter(user));
+      if (leadErr) throw leadErr;
+      lead = leads && leads.length > 0 ? leads[0] : null;
+
+      if (!conversation.customer_user_id && (conversation.customer_email || '').toLowerCase() === getUserEmail(user)) {
+        conversation = await safeUpdateConversationRecord(conversation.id, { customer_user_id: user.id }) || {
+          ...conversation,
+          customer_user_id: user.id
+        };
+      }
+
+      if (lead && !lead.customer_user_id && (lead.customer_email || '').toLowerCase() === getUserEmail(user)) {
+        lead = await safeUpdateLeadRecord(lead.id, { customer_user_id: user.id }) || {
+          ...lead,
+          customer_user_id: user.id
+        };
+      }
+    } else {
+      conversation = mockStore.conversations.find((item) => item.id === id) || null;
+      if (!conversation) return res.status(404).json({ error: 'Conversation not found (Mock)' });
+      if (!matchesCustomer(conversation, user)) {
+        return res.status(403).json({ error: 'Forbidden: Access denied (Mock)' });
+      }
+
+      if (!conversation.customer_user_id && (conversation.customer_email || '').toLowerCase() === getUserEmail(user)) {
+        conversation.customer_user_id = user.id;
+      }
+
+      lead = mockStore.leads.find((item) => item.conversation_id === id && matchesCustomer(item, user)) || null;
+      if (lead && !lead.customer_user_id && (lead.customer_email || '').toLowerCase() === getUserEmail(user)) {
+        lead.customer_user_id = user.id;
+      }
+    }
+
+    const message = await createConversationMessage(id, 'customer', content);
+    const updatedConversation = await safeUpdateConversationRecord(id, {
+      needs_human_review: true,
+      status: 'open'
+    });
+
+    return res.status(201).json({
+      success: true,
+      message,
+      conversation: updatedConversation || conversation,
+      lead
     });
   } catch (err) {
     return res.status(err.status || 500).json({ error: err.message });
@@ -485,7 +708,7 @@ const resolveBusinessForPublicEnquiry = async ({ businessId, businessSlug, allow
   if (isSupabaseConfigured()) {
     let query = supabase
       .from('businesses')
-      .select('id, name, slug, is_public');
+      .select('id, name, slug, category, city, service_area, public_description, opening_hours, is_public');
 
     query = cleanBusinessId
       ? query.eq('id', cleanBusinessId)
@@ -545,6 +768,102 @@ const resolveOptionalCustomerUser = async (req) => {
   }
 
   return null;
+};
+
+const getBusinessServicesForAi = async (businessId) => {
+  if (!businessId) return [];
+
+  if (isSupabaseConfigured()) {
+    const { data, error } = await supabase
+      .from('services')
+      .select('*')
+      .eq('business_id', businessId)
+      .eq('is_public', true)
+      .order('sort_order', { ascending: true });
+    if (error) throw error;
+    return data || [];
+  }
+
+  return mockStore.services.filter((service) => service.business_id === businessId && service.is_public !== false);
+};
+
+const getBusinessFaqsForAi = async (businessId) => {
+  if (!businessId) return [];
+
+  if (isSupabaseConfigured()) {
+    const { data, error } = await supabase
+      .from('faqs')
+      .select('*')
+      .eq('business_id', businessId);
+    if (error) throw error;
+    return data || [];
+  }
+
+  return mockStore.faqs.filter((faq) => faq.business_id === businessId);
+};
+
+const maybeCreateAiReceptionistReply = async ({ conversation, business, lead, service, firstMessage }) => {
+  const enabled = process.env.AUTO_AI_REPLY_ON_ENQUIRY !== 'false';
+  if (!enabled) {
+    return { auto_replied: false, reason: 'disabled' };
+  }
+
+  try {
+    const [services, faqs] = await Promise.all([
+      getBusinessServicesForAi(business.id),
+      getBusinessFaqsForAi(business.id)
+    ]);
+
+    const draft = await generateReceptionistDraft(
+      {
+        conversation,
+        business,
+        lead,
+        service,
+        messages: [firstMessage].filter(Boolean),
+        services,
+        faqs
+      },
+      {
+        prompt: 'Acknowledge the request professionally and concisely. Mention that the request for the selected service has been received by the business. Confirm receipt, and state that the details have been shared with the team who will review and reply with availability. Keep the tone professional, welcoming, and short.'
+      }
+    );
+
+    if (!draft?.suggested_reply) {
+      return { auto_replied: false, reason: 'empty_draft' };
+    }
+
+    const aiMessage = await createConversationMessage(
+      conversation.id,
+      'ai',
+      draft.suggested_reply,
+      {
+        source: 'ai_receptionist',
+        mode: draft.fallback_mode ? 'fallback' : 'openai',
+        confidence: draft.confidence ?? null,
+        intent: draft.intent || null,
+        needs_human_review: Boolean(draft.needs_human_review)
+      }
+    );
+
+    await safeUpdateConversationRecord(conversation.id, {
+      ai_confidence: draft.confidence ?? null,
+      needs_human_review: Boolean(draft.needs_human_review)
+    });
+
+    return {
+      auto_replied: true,
+      message_id: aiMessage.id,
+      confidence: draft.confidence ?? null,
+      fallback_mode: Boolean(draft.fallback_mode),
+      needs_human_review: Boolean(draft.needs_human_review),
+      intent: draft.intent || null,
+      missing_details: draft.missing_details || []
+    };
+  } catch (err) {
+    console.warn('AI receptionist auto-reply skipped:', err.message);
+    return { auto_replied: false, error: err.message };
+  }
 };
 
 exports.createEnquiry = async (req, res) => {
@@ -668,10 +987,8 @@ exports.createEnquiry = async (req, res) => {
 
       if (convErr) throw convErr;
 
-      await supabase.from('messages').insert({
-        conversation_id: conv.id,
-        sender: 'customer',
-        content: firstMessage
+      const initialMessage = await createConversationMessage(conv.id, 'customer', firstMessage, {
+        source: 'marketplace_booking'
       });
 
       const { data: lead, error: leadErr } = await supabase
@@ -695,6 +1012,14 @@ exports.createEnquiry = async (req, res) => {
 
       if (leadErr) throw leadErr;
 
+      const aiReceptionist = await maybeCreateAiReceptionistReply({
+        conversation: conv,
+        business: targetBusiness,
+        lead,
+        service: resolvedService,
+        firstMessage: initialMessage
+      });
+
       console.log('⚡ [DEV TRACE] createEnquiry:', JSON.stringify({
         received_business_slug: business_slug || null,
         received_business_id: business_id || null,
@@ -708,6 +1033,14 @@ exports.createEnquiry = async (req, res) => {
         created_lead_service_id: lead.service_id
       }, null, 2));
 
+      console.log('⚡ [DEV LOG - createEnquiry (Supabase)]:', JSON.stringify({
+        created_conversation_id: conv.id,
+        created_customer_message_id: initialMessage?.id || null,
+        ai_auto_reply_attempted: aiReceptionist ? true : false,
+        ai_mode: aiReceptionist?.fallback_mode ? 'fallback' : (aiReceptionist?.error ? 'error' : 'openai'),
+        created_ai_message_id: aiReceptionist?.message_id || null
+      }, null, 2));
+
       return res.status(201).json({
         success: true,
         lead_id: lead.id,
@@ -716,7 +1049,8 @@ exports.createEnquiry = async (req, res) => {
         business_slug: targetBusiness.slug,
         business_name: targetBusiness.name,
         customer_email: finalCustomerEmail,
-        authenticated: !!customer_user_id
+        authenticated: !!customer_user_id,
+        ai_receptionist: aiReceptionist
       });
     }
 
@@ -734,7 +1068,8 @@ exports.createEnquiry = async (req, res) => {
       status: 'open',
       ai_confidence: null,
       needs_human_review: false,
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
 
     const newMessage = {
@@ -742,6 +1077,7 @@ exports.createEnquiry = async (req, res) => {
       conversation_id: newConvId,
       sender: 'customer',
       content: firstMessage,
+      metadata: { source: 'marketplace_booking' },
       created_at: new Date().toISOString()
     };
 
@@ -759,12 +1095,21 @@ exports.createEnquiry = async (req, res) => {
       preferred_date: cleanPreferredDate,
       notes: cleanNotes,
       status: 'new',
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
 
     mockStore.conversations.push(newConversation);
     mockStore.messages.push(newMessage);
     mockStore.leads.push(newLead);
+
+    const aiReceptionist = await maybeCreateAiReceptionistReply({
+      conversation: newConversation,
+      business: targetBusiness,
+      lead: newLead,
+      service: resolvedService,
+      firstMessage: newMessage
+    });
 
     console.log('⚡ [DEV TRACE] createEnquiry (Mock):', JSON.stringify({
       received_business_slug: business_slug || null,
@@ -779,6 +1124,14 @@ exports.createEnquiry = async (req, res) => {
       created_lead_service_id: newLead.service_id
     }, null, 2));
 
+    console.log('⚡ [DEV LOG - createEnquiry (Mock)]:', JSON.stringify({
+      created_conversation_id: newConvId,
+      created_customer_message_id: newMessage?.id || null,
+      ai_auto_reply_attempted: aiReceptionist ? true : false,
+      ai_mode: aiReceptionist?.fallback_mode ? 'fallback' : (aiReceptionist?.error ? 'error' : 'openai'),
+      created_ai_message_id: aiReceptionist?.message_id || null
+    }, null, 2));
+
     return res.status(201).json({
       success: true,
       lead_id: newLeadId,
@@ -787,7 +1140,8 @@ exports.createEnquiry = async (req, res) => {
       business_slug: targetBusiness.slug,
       business_name: targetBusiness.name,
       customer_email: finalCustomerEmail,
-      authenticated: !!customer_user_id
+      authenticated: !!customer_user_id,
+      ai_receptionist: aiReceptionist
     });
   } catch (err) {
     console.error('createEnquiry error:', err.message);

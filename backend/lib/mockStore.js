@@ -473,6 +473,26 @@ const mockStore = {
   ]
 };
 
+mockStore.messages.forEach((message) => {
+  if (!message.metadata) message.metadata = {};
+});
+
+mockStore.conversations.forEach((conversation) => {
+  if (!conversation.updated_at) {
+    const latestMessage = mockStore.messages
+      .filter((message) => message.conversation_id === conversation.id)
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+    conversation.updated_at = latestMessage?.created_at || conversation.created_at;
+  }
+});
+
+mockStore.leads.forEach((lead) => {
+  if (!lead.updated_at) {
+    const conversation = mockStore.conversations.find((item) => item.id === lead.conversation_id);
+    lead.updated_at = conversation?.updated_at || lead.created_at;
+  }
+});
+
 module.exports = {
   DEMO_BUSINESS_ID,
   FRESHFIX_BUSINESS_ID,

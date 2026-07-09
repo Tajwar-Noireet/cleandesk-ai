@@ -112,7 +112,7 @@ const CustomerBookings = () => {
                       View business
                     </Link>
                   ) : null}
-                  <Link to="/customer/conversations" className="btn-primary marketplace-btn">
+                  <Link to={booking.conversation_id ? `/customer/conversations?conversation=${booking.conversation_id}` : '/customer/conversations'} className="btn-primary marketplace-btn">
                     Continue conversation
                   </Link>
                 </div>

@@ -1,65 +1,210 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
-import ConversationCard from '../components/ConversationCard';
 import { api } from '../services/api';
-import { ClockIcon, ShieldIcon, CheckIcon, MessageIcon, InboxIcon, UserIcon, AlertIcon, CalendarIcon } from '../components/Icons';
+import { AlertIcon, CalendarIcon, CheckIcon, InboxIcon, MessageIcon, ShieldIcon, UserIcon } from '../components/Icons';
+
+const formatDateTime = (value) => {
+  if (!value) return 'Not set';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+};
+
+const senderLabel = (sender) => {
+  const clean = String(sender || '').toLowerCase().trim();
+  if (clean === 'customer') return 'Customer';
+  if (clean === 'ai') return 'AI receptionist';
+  if (clean === 'owner') return 'Business owner';
+  return 'System';
+};
+
+const getMessageSender = (msg) => {
+  if (!msg) return 'system';
+  const val = msg.sender || msg.sender_type || msg.role || msg.message_type || 'system';
+  const clean = String(val).toLowerCase().trim();
+  if (clean === 'customer' || clean === 'ai' || clean === 'owner' || clean === 'system') {
+    return clean;
+  }
+  return 'system';
+};
+
+const getMessageContent = (msg) => {
+  if (!msg) return '';
+  return msg.content || msg.body || msg.text || '';
+};
+
+const normalizeConfidence = (value) => {
+  const confidence = Number(value);
+  if (Number.isNaN(confidence)) return null;
+  return confidence > 1 ? confidence : Math.round(confidence * 100);
+};
 
 const Conversations = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [conversations, setConversations] = useState([]);
-  const [activeConvId, setActiveConvId] = useState(null);
+  const [activeConvId, setActiveConvId] = useState(searchParams.get('conversation'));
   const [activeTranscript, setActiveTranscript] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingTranscript, setIsLoadingTranscript] = useState(false);
+  const [composer, setComposer] = useState('');
+  const [draftPrompt, setDraftPrompt] = useState('');
+  const [aiDraft, setAiDraft] = useState(null);
+  const [isGeneratingDraft, setIsGeneratingDraft] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [error, setError] = useState('');
   const transcriptEndRef = useRef(null);
-  const navigate = useNavigate();
 
-  const loadConversations = async () => {
+  const activeConversation = useMemo(
+    () => conversations.find((conversation) => conversation.id === activeConvId) || null,
+    [conversations, activeConvId]
+  );
+
+  const loadConversations = async (preferredId = activeConvId) => {
     try {
-      const bData = await api.getBusinessOfCurrentUser();
-      const targetId = bData.id;
-      const data = await api.getConversations(targetId);
-      setConversations(data);
-      if (data.length > 0 && !activeConvId) {
-        setActiveConvId(data[0].id);
+      const data = await api.getConversations();
+      setConversations(data || []);
+      const queryConversation = searchParams.get('conversation');
+      const nextId = queryConversation || preferredId || data?.[0]?.id || null;
+      if (nextId) {
+        setActiveConvId(nextId);
+        setSearchParams({ conversation: nextId }, { replace: true });
       }
     } catch (err) {
-      console.error(err);
-      navigate('/dashboard/business');
+      setError(err.message || 'Could not load conversations.');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const loadActiveTranscript = async () => {
+    if (!activeConvId) {
+      setActiveTranscript(null);
+      return;
+    }
+
+    try {
+      setIsLoadingTranscript(true);
+      const detail = await api.getConversationDetail(activeConvId);
+      setActiveTranscript(detail);
+      setAiDraft(detail.ai || null);
+    } catch (err) {
+      setError(err.message || 'Could not load this conversation.');
+      setActiveTranscript(null);
+    } finally {
+      setIsLoadingTranscript(false);
+    }
+  };
+
   useEffect(() => {
     loadConversations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    const loadActiveTranscript = async () => {
-      if (!activeConvId) return;
-      setIsLoadingTranscript(true);
-      try {
-        const detail = await api.getConversationDetail(activeConvId);
-        setActiveTranscript(detail);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setIsLoadingTranscript(false);
-      }
-    };
+    const queryConversation = searchParams.get('conversation');
+    if (queryConversation && queryConversation !== activeConvId) {
+      setActiveConvId(queryConversation);
+    }
+  }, [searchParams, activeConvId]);
+
+  useEffect(() => {
     loadActiveTranscript();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeConvId]);
 
   useEffect(() => {
     transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [activeTranscript]);
 
+  const chooseConversation = (conversationId) => {
+    setActiveConvId(conversationId);
+    setSearchParams({ conversation: conversationId });
+    setComposer('');
+    setError('');
+  };
+
+  const refreshThread = async () => {
+    await Promise.all([
+      loadConversations(activeConvId),
+      loadActiveTranscript()
+    ]);
+  };
+
+  const sendOwnerMessage = async () => {
+    if (!activeConvId || !composer.trim()) return;
+    try {
+      setIsSending(true);
+      setError('');
+      await api.sendOwnerConversationMessage(activeConvId, composer);
+      setComposer('');
+      await refreshThread();
+    } catch (err) {
+      setError(err.message || 'Could not send the owner reply.');
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const generateDraft = async () => {
+    if (!activeConvId) return;
+    try {
+      setIsGeneratingDraft(true);
+      setError('');
+      const draft = await api.generateOwnerAiDraft(activeConvId, draftPrompt);
+      setAiDraft(draft);
+    } catch (err) {
+      setError(err.message || 'Could not generate an AI draft.');
+    } finally {
+      setIsGeneratingDraft(false);
+    }
+  };
+
+  const sendAiReply = async () => {
+    if (!activeConvId || !aiDraft?.suggested_reply) return;
+    try {
+      setIsSending(true);
+      setError('');
+      await api.sendOwnerAiReply(activeConvId, aiDraft.suggested_reply, draftPrompt);
+      setComposer('');
+      await refreshThread();
+    } catch (err) {
+      setError(err.message || 'Could not send the AI reply.');
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const markReviewed = async () => {
+    if (!activeConvId) return;
+    try {
+      setError('');
+      await api.markConversationReviewed(activeConvId);
+      await refreshThread();
+    } catch (err) {
+      setError(err.message || 'Could not mark the conversation reviewed.');
+    }
+  };
+
+  const updateLeadStatus = async (status) => {
+    if (!activeTranscript?.lead?.id) return;
+    try {
+      setError('');
+      await api.updateLeadStatus(activeTranscript.lead.id, status);
+      await refreshThread();
+    } catch (err) {
+      setError(err.message || 'Could not update the lead status.');
+    }
+  };
+
+  const missingDetails = aiDraft?.missing_details || activeTranscript?.ai?.missing_details || [];
+  const confidence = normalizeConfidence(aiDraft?.confidence ?? activeTranscript?.ai_confidence ?? activeTranscript?.ai?.confidence);
+
   if (isLoading) {
     return (
       <div className="dashboard-wrapper">
         <Sidebar />
-        <div className="dashboard-content loading">Loading conversations feed...</div>
+        <div className="dashboard-content loading">Loading conversation inbox...</div>
       </div>
     );
   }
@@ -71,116 +216,218 @@ const Conversations = () => {
       <main className="dashboard-content no-scroll">
         <header className="dashboard-header">
           <div>
-            <span className="dashboard-welcome">NLP Logs</span>
-            <h1 className="dashboard-title">Conversations Feed</h1>
+            <span className="dashboard-welcome">Owner inbox</span>
+            <h1 className="dashboard-title">AI receptionist conversations</h1>
           </div>
         </header>
 
-        <div className="conversations-split-view">
-          {/* Left Side: Conversation list */}
-          <div className="conversations-sidebar-list">
-            {conversations.length === 0 ? (
-              <p className="no-conv-msg">No active conversations found.</p>
-            ) : (
-              conversations.map(conv => (
-                <ConversationCard
-                  key={conv.id}
-                  conversation={conv}
-                  isActive={conv.id === activeConvId}
-                  onClick={() => setActiveConvId(conv.id)}
-                />
-              ))
-            )}
-          </div>
+        {error ? <div className="dashboard-alert">{error}</div> : null}
 
-          {/* Right Side: Chat Transcript */}
-          <div className="conversation-transcript-pane">
+        <section className="conversation-command-center">
+          <aside className="conversation-inbox-panel" aria-label="Conversation inbox">
+            <div className="conversation-panel-header">
+              <div>
+                <span>Inbox</span>
+                <h2>Customer threads</h2>
+              </div>
+              <strong>{conversations.length}</strong>
+            </div>
+
+            <div className="owner-conversation-list">
+              {conversations.length === 0 ? (
+                <p className="no-conv-msg">No active conversations yet.</p>
+              ) : (
+                conversations.map((conversation) => {
+                  if (!conversation) return null;
+                  return (
+                    <button
+                      type="button"
+                      className={`owner-conversation-item ${conversation.id === activeConvId ? 'active' : ''}`}
+                      key={conversation.id}
+                      onClick={() => chooseConversation(conversation.id)}
+                    >
+                      <div className="owner-conversation-item-top">
+                        <strong>{conversation.customer_name || 'Anonymous customer'}</strong>
+                        {conversation.needs_human_review ? (
+                          <span className="review-badge"><AlertIcon size={12} /> Review</span>
+                        ) : null}
+                      </div>
+                      <span>{conversation.service_type || 'General enquiry'}</span>
+                      <p>{conversation.latest_message_preview || 'No messages yet'}</p>
+                      <time>{formatDateTime(conversation.latest_message_at || conversation.updated_at || conversation.created_at)}</time>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </aside>
+
+          <section className="conversation-thread-panel">
             {isLoadingTranscript ? (
-              <div className="transcript-loading">Loading message transcript...</div>
+              <div className="transcript-loading">Loading message thread...</div>
             ) : activeTranscript ? (
-              <div className="transcript-pane-inner">
-                {/* Header */}
-                <div className="transcript-header">
+              <>
+                <div className="conversation-thread-header">
                   <div>
-                    <h3>{activeTranscript.customer_name || 'Anonymous Customer'}</h3>
-                    <p>Phone: {activeTranscript.customer_phone || 'None provided'}</p>
+                    <span>{activeConversation?.business_name || activeTranscript.business?.name || 'Your business'}</span>
+                    <h2>{activeTranscript.customer_name || 'Anonymous customer'}</h2>
+                    <p>{activeTranscript.customer_email || 'No email'} {activeTranscript.customer_phone ? `- ${activeTranscript.customer_phone}` : ''}</p>
                   </div>
-                  <div className="transcript-header-meta">
-                    <span className="ai-confidence-pill">
-                      Confidence: {Math.round(activeTranscript.ai_confidence * 100)}%
-                    </span>
-                    {activeTranscript.needs_human_review && (
-                      <span className="escalation-alert-pill" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
-                        <AlertIcon size={12} /> Escalated
-                      </span>
-                    )}
+                  <div className="thread-header-actions">
+                    {confidence !== null ? <span className="ai-confidence-pill">AI confidence {confidence}%</span> : null}
+                    {activeTranscript.needs_human_review ? (
+                      <button type="button" className="btn-secondary small-action" onClick={markReviewed}>
+                        Mark reviewed
+                      </button>
+                    ) : null}
                   </div>
                 </div>
 
-                {/* Lead Progress Panel */}
-                {activeTranscript.lead && (
-                  <div className="transcript-lead-progress-panel">
-                    <div className="progress-panel-header">
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
-                        <InboxIcon size={12} /> Lead Capture Checklist
-                      </span>
-                      <span className={`status-pill ${activeTranscript.lead.status}`}>
-                        {activeTranscript.lead.status}
-                      </span>
+                {activeTranscript.lead ? (
+                  <div className="conversation-lead-summary">
+                    <div className="lead-summary-row">
+                      <span><InboxIcon size={13} /> {activeTranscript.lead.service_type || 'Service request'}</span>
+                      <strong className={`status-pill ${activeTranscript.lead.status || 'new'}`}>{activeTranscript.lead.status || 'new'}</strong>
                     </div>
-                    <div className="progress-panel-slots">
-                      <span className={`progress-slot ${activeTranscript.lead.customer_name ? 'filled' : 'empty'}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
-                        <UserIcon size={12} /> Name: {activeTranscript.lead.customer_name || 'Missing'}
-                      </span>
-                      <span className={`progress-slot ${activeTranscript.lead.customer_phone ? 'filled' : 'empty'}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
-                        <UserIcon size={12} /> Phone: {activeTranscript.lead.customer_phone || 'Missing'}
-                      </span>
-                      <span className={`progress-slot ${activeTranscript.lead.address ? 'filled' : 'empty'}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
-                        <ShieldIcon size={12} /> Address: {activeTranscript.lead.address || 'Missing'}
-                      </span>
-                      <span className={`progress-slot ${activeTranscript.lead.service_type ? 'filled' : 'empty'}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
-                        <CheckIcon size={12} /> Service: {activeTranscript.lead.service_type || 'Missing'}
-                      </span>
-                      <span className={`progress-slot ${activeTranscript.lead.preferred_date ? 'filled' : 'empty'}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
-                        <CalendarIcon size={12} /> Date: {activeTranscript.lead.preferred_date || 'Missing'}
-                      </span>
+                    <div className="lead-summary-grid">
+                      <span><ShieldIcon size={13} /> {activeTranscript.lead.address || 'Address missing'}</span>
+                      <span><CalendarIcon size={13} /> {activeTranscript.lead.preferred_date || 'Date missing'}</span>
+                      <span><UserIcon size={13} /> {activeTranscript.lead.customer_phone || 'Phone missing'}</span>
+                      <span><CheckIcon size={13} /> {activeTranscript.lead.notes || 'No notes'}</span>
+                    </div>
+                    <div className="lead-status-actions">
+                      <button type="button" className="btn-secondary small-action" onClick={() => updateLeadStatus('contacted')}>Mark contacted</button>
+                      <button type="button" className="btn-secondary small-action" onClick={() => updateLeadStatus('booked')}>Mark booked</button>
+                      <button type="button" className="btn-secondary small-action" onClick={() => updateLeadStatus('lost')}>Close request</button>
                     </div>
                   </div>
-                )}
+                ) : null}
 
-                {/* Messages Box */}
-                <div className="transcript-messages-box">
-                  {activeTranscript.messages && activeTranscript.messages.length === 0 ? (
-                    <p className="no-msg-info">No messages recorded in this log.</p>
+                <div className="message-thread-scroll">
+                  {(activeTranscript.messages || []).length === 0 ? (
+                    <p className="no-msg-info">No messages recorded in this thread.</p>
                   ) : (
-                    activeTranscript.messages.map(msg => (
-                      <div key={msg.id} className={`transcript-message-row ${msg.sender}`}>
-                        <div className="transcript-avatar" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-                          {msg.sender === 'customer' ? <UserIcon size={14} /> : msg.sender === 'ai' ? <MessageIcon size={14} /> : <ShieldIcon size={14} />}
-                        </div>
-                        <div className="transcript-bubble">
-                          <div className="bubble-sender-name">
-                            {msg.sender === 'customer' ? 'Customer' : msg.sender === 'ai' ? 'CleanDesk AI' : 'Business Owner'}
+                    activeTranscript.messages.map((message) => {
+                      if (!message) return null;
+                      const normalizedSender = getMessageSender(message);
+                      const normalizedContent = getMessageContent(message);
+                      return (
+                        <div className={`thread-message ${normalizedSender}`} key={message.id || Math.random().toString()}>
+                          <div className="thread-message-bubble">
+                            <span>{senderLabel(normalizedSender)}</span>
+                            <p>{normalizedContent}</p>
+                            <time>{formatDateTime(message.created_at)}</time>
                           </div>
-                          <div className="bubble-text">{msg.content}</div>
-                          <span className="bubble-time">
-                            {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                   <div ref={transcriptEndRef} />
                 </div>
-              </div>
+
+                <div className="message-composer">
+                  <textarea
+                    value={composer}
+                    onChange={(event) => setComposer(event.target.value)}
+                    placeholder="Write a response as the business owner..."
+                    rows={3}
+                  />
+                  <div className="message-composer-actions">
+                    <button type="button" className="btn-secondary marketplace-btn" onClick={() => setComposer(aiDraft?.suggested_reply || '')} disabled={!aiDraft?.suggested_reply}>
+                      Use AI draft
+                    </button>
+                    <button type="button" className="btn-primary marketplace-btn" onClick={sendOwnerMessage} disabled={isSending || !composer.trim()}>
+                      {isSending ? 'Sending...' : 'Send owner reply'}
+                    </button>
+                  </div>
+                </div>
+              </>
             ) : (
               <div className="transcript-empty-state">
                 <h3>Select a conversation</h3>
-                <p>Choose a contact row on the left to see the message transcript history between the customer and Assistant.</p>
+                <p>Choose a customer thread to see messages and AI receptionist notes.</p>
               </div>
             )}
-          </div>
-        </div>
+          </section>
+
+          <aside className="conversation-ai-panel" aria-label="AI receptionist panel">
+            <div className="conversation-panel-header">
+              <div>
+                <span>Receptionist</span>
+                <h2>AI assist</h2>
+              </div>
+              <MessageIcon size={18} />
+            </div>
+
+            {activeTranscript ? (
+              <>
+                <section className="ai-panel-section">
+                  <h3>Summary</h3>
+                  <p>{aiDraft?.summary || activeTranscript.ai?.summary || 'No summary available yet.'}</p>
+                </section>
+
+                <section className="ai-panel-section">
+                  <h3>Next action</h3>
+                  <p>{aiDraft?.next_action || activeTranscript.ai?.next_action || 'Review the latest customer message.'}</p>
+                </section>
+
+                <section className="ai-panel-section">
+                  <h3>Missing details</h3>
+                  {missingDetails.length > 0 ? (
+                    <ul className="ai-missing-list">
+                      {missingDetails.map((detail) => {
+                        if (!detail) return null;
+                        const label = typeof detail === 'string'
+                          ? detail
+                          : (detail.label || detail.key || '');
+                        const key = typeof detail === 'string'
+                          ? detail
+                          : (detail.key || label || Math.random().toString());
+                        return (
+                          <li key={key}>{String(label).replace(/_/g, ' ')}</li>
+                        );
+                      })}
+                    </ul>
+                  ) : (
+                    <p>Core request details are captured.</p>
+                  )}
+                </section>
+
+                <section className="ai-panel-section">
+                  <label htmlFor="aiDraftPrompt">Draft guidance</label>
+                  <textarea
+                    id="aiDraftPrompt"
+                    value={draftPrompt}
+                    onChange={(event) => setDraftPrompt(event.target.value)}
+                    placeholder="Optional: ask for a shorter reply, pricing clarification, or booking tone..."
+                    rows={3}
+                  />
+                  <button type="button" className="btn-secondary marketplace-btn full-width" onClick={generateDraft} disabled={isGeneratingDraft}>
+                    {isGeneratingDraft ? 'Generating...' : 'Generate AI draft'}
+                  </button>
+                </section>
+
+                {aiDraft?.suggested_reply ? (
+                  <section className="ai-panel-section">
+                    <h3>Suggested reply</h3>
+                    <div className="ai-draft-box">{aiDraft.suggested_reply}</div>
+                    <div className="ai-action-row">
+                      <button type="button" className="btn-secondary marketplace-btn" onClick={() => setComposer(aiDraft.suggested_reply)}>
+                        Edit in composer
+                      </button>
+                      <button type="button" className="btn-primary marketplace-btn" onClick={sendAiReply} disabled={isSending}>
+                        Send AI reply
+                      </button>
+                    </div>
+                    {aiDraft.fallback_mode ? <p className="ai-fallback-note">Using local fallback while the AI service is unavailable.</p> : null}
+                  </section>
+                ) : null}
+              </>
+            ) : (
+              <p className="customer-muted-text">Select a thread to see receptionist analysis.</p>
+            )}
+          </aside>
+        </section>
       </main>
     </div>
   );

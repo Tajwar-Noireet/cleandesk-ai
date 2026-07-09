@@ -55,6 +55,58 @@ const checkLeadOwnership = async (userId, leadId) => {
   return await checkBusinessOwnership(userId, lead.business_id);
 };
 
+const enrichLeadsWithConversationPreview = async (leads) => {
+  const conversationIds = [...new Set((leads || []).map((lead) => lead.conversation_id).filter(Boolean))];
+  if (conversationIds.length === 0) return leads || [];
+
+  let conversations = [];
+  let messages = [];
+
+  if (isSupabaseConfigured()) {
+    const { data: convData, error: convErr } = await supabase
+      .from('conversations')
+      .select('id, status, needs_human_review, ai_confidence, updated_at, created_at')
+      .in('id', conversationIds);
+    if (convErr) throw convErr;
+    conversations = convData || [];
+
+    const { data: messageData, error: msgErr } = await supabase
+      .from('messages')
+      .select('id, conversation_id, sender, content, created_at')
+      .in('conversation_id', conversationIds)
+      .order('created_at', { ascending: false });
+    if (msgErr) throw msgErr;
+    messages = messageData || [];
+  } else {
+    conversations = mockStore.conversations.filter((conversation) => conversationIds.includes(conversation.id));
+    messages = mockStore.messages
+      .filter((message) => conversationIds.includes(message.conversation_id))
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  }
+
+  const conversationMap = new Map(conversations.map((conversation) => [conversation.id, conversation]));
+  const latestMessageMap = new Map();
+  messages.forEach((message) => {
+    if (!latestMessageMap.has(message.conversation_id)) {
+      latestMessageMap.set(message.conversation_id, message);
+    }
+  });
+
+  return (leads || []).map((lead) => {
+    const conversation = conversationMap.get(lead.conversation_id);
+    const latestMessage = latestMessageMap.get(lead.conversation_id);
+    return {
+      ...lead,
+      conversation_status: conversation?.status || null,
+      conversation_needs_human_review: Boolean(conversation?.needs_human_review),
+      conversation_updated_at: conversation?.updated_at || conversation?.created_at || null,
+      latest_message_preview: latestMessage?.content || null,
+      latest_message_sender: latestMessage?.sender || null,
+      latest_message_at: latestMessage?.created_at || null
+    };
+  });
+};
+
 // Get leads for a business
 exports.getLeadsByBusiness = async (req, res) => {
   const { businessId } = req.params;
@@ -90,25 +142,27 @@ exports.getLeadsByBusiness = async (req, res) => {
         throw error;
       }
 
+      const enrichedLeads = await enrichLeadsWithConversationPreview(data || []);
+
       console.log('⚡ [DEV LOG] GET /api/leads/:businessId (Supabase):', JSON.stringify({
         authenticated_owner_user_id: userId,
         resolved_owner_business_id: businessId,
         owner_business_slug: businessSlug,
-        number_of_leads_found: data ? data.length : 0,
-        returned_lead_ids: data ? data.map(l => l.id) : [],
-        returned_lead_business_ids: data ? data.map(l => l.business_id) : []
+        number_of_leads_found: enrichedLeads.length,
+        returned_lead_ids: enrichedLeads.map(l => l.id),
+        returned_lead_business_ids: enrichedLeads.map(l => l.business_id)
       }, null, 2));
 
-      return res.json(data || []);
+      return res.json(enrichedLeads);
     } catch (err) {
       return res.status(500).json({ error: `Supabase load leads failed: ${err.message}` });
     }
   }
 
   // Mock Store filter sorted by date desc
-  const leads = mockStore.leads
+  const leads = await enrichLeadsWithConversationPreview(mockStore.leads
     .filter(l => l.business_id === businessId)
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
 
   console.log('⚡ [DEV LOG] GET /api/leads/:businessId (Mock):', JSON.stringify({
     authenticated_owner_user_id: userId,

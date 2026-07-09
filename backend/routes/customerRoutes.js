@@ -6,6 +6,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 // All customer routes are private and isolated to the authenticated customer user
 router.get('/dashboard', authMiddleware, customerController.getCustomerDashboard);
 router.get('/conversations', authMiddleware, customerController.getCustomerConversations);
+router.post('/conversations/:id/messages', authMiddleware, customerController.sendCustomerConversationMessage);
 router.get('/conversations/:id', authMiddleware, customerController.getCustomerConversationDetail);
 router.get('/bookings', authMiddleware, customerController.getCustomerBookings);
 router.put('/profile', authMiddleware, customerController.updateCustomerProfile);

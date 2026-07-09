@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { UserIcon, ShieldIcon, CheckIcon, CalendarIcon } from './Icons';
 
 const LeadCard = ({ lead, onStatusChange }) => {
@@ -59,6 +60,24 @@ const LeadCard = ({ lead, onStatusChange }) => {
             <strong>Notes:</strong> {lead.notes}
           </div>
         )}
+
+        {lead.latest_message_preview ? (
+          <div className="lead-message-preview">
+            <strong>Latest message</strong>
+            <span>{lead.latest_message_sender ? `${lead.latest_message_sender}: ` : ''}{lead.latest_message_preview}</span>
+          </div>
+        ) : null}
+
+        {lead.conversation_id ? (
+          <div className="lead-card-actions">
+            <Link to={`/dashboard/conversations?conversation=${lead.conversation_id}`} className="btn-secondary small-action">
+              Open conversation
+            </Link>
+            {lead.conversation_needs_human_review ? (
+              <span className="review-badge">Needs review</span>
+            ) : null}
+          </div>
+        ) : null}
       </div>
     </div>
   );

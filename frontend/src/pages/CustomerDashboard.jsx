@@ -198,16 +198,23 @@ const CustomerDashboard = () => {
                               <dd>{getNextAction(lead)}</dd>
                             </div>
                           </dl>
+
+                          <div className="customer-request-actions">
+                            {relatedConversation ? (
+                              <Link to={`/customer/conversations?conversation=${relatedConversation.id}`} className="customer-conversation-link">
+                                <MessageIcon size={14} />
+                                Continue conversation
+                              </Link>
+                            ) : null}
+                            {lead.business_slug ? (
+                              <Link to={`/business/${lead.business_slug}`} className="marketplace-card-link">
+                                View business
+                              </Link>
+                            ) : null}
+                          </div>
                         </div>
                       );
                     })}
-
-                    {group.conversations.length > 0 ? (
-                      <Link to="/customer/conversations" className="customer-conversation-link">
-                        <MessageIcon size={14} />
-                        Continue conversations with {group.business_name}
-                      </Link>
-                    ) : null}
                   </div>
                 </article>
               ))}

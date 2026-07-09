@@ -136,6 +136,26 @@ frontendFallbackData.faqs.push(
   { id: 'bp-f2', business_id: 'f5b07384-d113-4ec5-a5d6-c6e7f8d9a303', question: 'Can parents track progress?', answer: 'Yes, tutors provide progress notes after each session.' }
 );
 
+frontendFallbackData.messages.forEach((message) => {
+  if (!message.metadata) message.metadata = {};
+});
+
+frontendFallbackData.conversations.forEach((conversation) => {
+  if (!conversation.updated_at) {
+    const latestMessage = frontendFallbackData.messages
+      .filter((message) => message.conversation_id === conversation.id)
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+    conversation.updated_at = latestMessage?.created_at || conversation.created_at;
+  }
+});
+
+frontendFallbackData.leads.forEach((lead) => {
+  if (!lead.updated_at) {
+    const conversation = frontendFallbackData.conversations.find((item) => item.id === lead.conversation_id);
+    lead.updated_at = conversation?.updated_at || lead.created_at;
+  }
+});
+
 const normalizeFrontendSlug = (value) =>
   (value || '')
     .trim()
@@ -221,6 +241,61 @@ const enrichFrontendConversation = (conversation) => {
     lead_id: lead?.id || null,
     last_message_preview: lastMessage?.content || null,
     last_message_at: lastMessage?.created_at || conversation.updated_at || conversation.created_at
+  };
+};
+
+const touchFrontendConversation = (conversationId, updates = {}) => {
+  const index = frontendFallbackData.conversations.findIndex((conversation) => conversation.id === conversationId);
+  if (index === -1) return null;
+  frontendFallbackData.conversations[index] = {
+    ...frontendFallbackData.conversations[index],
+    ...updates,
+    updated_at: new Date().toISOString()
+  };
+  return frontendFallbackData.conversations[index];
+};
+
+const appendFrontendMessage = (conversationId, sender, content, metadata = {}) => {
+  const cleanContent = String(content || '').trim();
+  if (!cleanContent) throw new Error('Message content is required.');
+
+  const message = {
+    id: `m-local-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    conversation_id: conversationId,
+    sender,
+    content: cleanContent,
+    metadata,
+    created_at: new Date().toISOString()
+  };
+  frontendFallbackData.messages.push(message);
+  return message;
+};
+
+const buildFrontendAiDraft = (conversationId) => {
+  const conversation = frontendFallbackData.conversations.find((item) => item.id === conversationId);
+  const lead = getFrontendLeadByConversation().get(conversationId);
+  const business = frontendFallbackData.businesses.find((item) => item.id === conversation?.business_id);
+  const missing = [];
+  if (!lead?.customer_phone && !conversation?.customer_phone) missing.push('customer_phone');
+  if (!lead?.address) missing.push('address');
+  if (!lead?.preferred_date) missing.push('preferred_date');
+  if (!lead?.service_type) missing.push('service_type');
+
+  const service = lead?.service_type || 'service request';
+  const businessName = business?.name || 'the business';
+  const suggested = missing.length > 0
+    ? `Thanks for contacting ${businessName} about ${service}. We have your request and just need ${missing.join(', ').replace(/_/g, ' ')} before the owner can confirm the next step.`
+    : `Thanks for contacting ${businessName} about ${service}. Your request has the key details, and the owner can now review availability and follow up with you.`;
+
+  return {
+    suggested_reply: suggested,
+    summary: `${businessName} enquiry for ${service}`,
+    intent: 'booking_enquiry',
+    confidence: missing.length > 0 ? 0.78 : 0.9,
+    next_action: missing.length > 0 ? 'collect_missing_details' : 'owner_review',
+    missing_details: missing,
+    needs_human_review: false,
+    fallback_mode: true
   };
 };
 
@@ -636,33 +711,82 @@ export const api = {
   },
 
   // Conversations
-  getConversations: async (businessId = DEMO_BUSINESS_ID) => {
+  getConversations: async (businessId = null) => {
     try {
-      return await apiCall(`/api/conversations/${businessId}`);
+      const endpoint = businessId
+        ? `/api/conversations/business/${businessId}`
+        : '/api/conversations';
+      return await apiCall(endpoint);
     } catch {
-      return frontendFallbackData.conversations.filter(c => c.business_id === businessId);
+      const targetBusinessId = businessId || frontendFallbackData.business.id || DEMO_BUSINESS_ID;
+      return frontendFallbackData.conversations
+        .filter(c => c.business_id === targetBusinessId)
+        .map(enrichFrontendConversation)
+        .sort((a, b) => new Date(b.last_message_at || b.updated_at || b.created_at) - new Date(a.last_message_at || a.updated_at || a.created_at));
     }
   },
   getConversationDetail: async (conversationId) => {
     try {
-      return await apiCall(`/api/conversations/detail/${conversationId}`);
+      return await apiCall(`/api/conversations/${conversationId}`);
     } catch {
-      // Simulate detailing
-      const conversation = frontendFallbackData.conversations.find(c => c.id === conversationId) || {
-        id: conversationId,
-        customer_name: 'Sarah Jenkins',
-        customer_phone: '+44 7700 900077',
-        status: 'open',
-        ai_confidence: 0.88,
-        needs_human_review: false
-      };
+      const conversation = frontendFallbackData.conversations.find(c => c.id === conversationId);
+      if (!conversation) throw new Error('Conversation not found');
+      const lead = getFrontendLeadByConversation().get(conversationId) || null;
+      const business = frontendFallbackData.businesses.find((item) => item.id === conversation.business_id) || null;
+      const messages = frontendFallbackData.messages
+        .filter((message) => message.conversation_id === conversationId)
+        .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+      const ai = buildFrontendAiDraft(conversationId);
       return {
-        ...conversation,
-        messages: [
-          { id: 'm1', sender: 'customer', content: 'Hi, I need a deep clean.', created_at: new Date().toISOString() },
-          { id: 'm2', sender: 'ai', content: 'Hello! I can definitely help. Could you please share your name?', created_at: new Date().toISOString() }
-        ]
+        ...enrichFrontendConversation(conversation),
+        lead,
+        business,
+        service: null,
+        messages,
+        ai
       };
+    }
+  },
+  sendOwnerConversationMessage: async (conversationId, content) => {
+    try {
+      return await apiCall(`/api/conversations/${conversationId}/messages`, {
+        method: 'POST',
+        body: JSON.stringify({ content })
+      });
+    } catch {
+      const message = appendFrontendMessage(conversationId, 'owner', content);
+      const conversation = touchFrontendConversation(conversationId, { needs_human_review: false });
+      return { success: true, message, conversation };
+    }
+  },
+  generateOwnerAiDraft: async (conversationId, prompt = '') => {
+    try {
+      return await apiCall(`/api/conversations/${conversationId}/ai-draft`, {
+        method: 'POST',
+        body: JSON.stringify({ prompt })
+      });
+    } catch {
+      return buildFrontendAiDraft(conversationId);
+    }
+  },
+  sendOwnerAiReply: async (conversationId, content, prompt = '') => {
+    try {
+      return await apiCall(`/api/conversations/${conversationId}/ai-send`, {
+        method: 'POST',
+        body: JSON.stringify({ content, prompt })
+      });
+    } catch {
+      const draft = content ? { ...buildFrontendAiDraft(conversationId), suggested_reply: content, fallback_mode: false } : buildFrontendAiDraft(conversationId);
+      const message = appendFrontendMessage(conversationId, 'ai', draft.suggested_reply, { source: 'owner_ai_send' });
+      touchFrontendConversation(conversationId, { needs_human_review: Boolean(draft.needs_human_review), ai_confidence: draft.confidence });
+      return { success: true, message, ai: draft };
+    }
+  },
+  markConversationReviewed: async (conversationId) => {
+    try {
+      return await apiCall(`/api/conversations/${conversationId}/reviewed`, { method: 'POST' });
+    } catch {
+      return touchFrontendConversation(conversationId, { needs_human_review: false }) || { success: true };
     }
   },
 
@@ -696,6 +820,21 @@ export const api = {
           .filter((message) => message.conversation_id === id)
           .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
       };
+    }
+  },
+  customerSendConversationMessage: async (id, content) => {
+    try {
+      return await apiCall(`/api/customer/conversations/${id}/messages`, {
+        method: 'POST',
+        body: JSON.stringify({ content })
+      });
+    } catch {
+      const records = getFrontendCustomerRecords();
+      const conversation = records.conversations.find((item) => item.id === id);
+      if (!conversation) throw new Error('Conversation not found');
+      const message = appendFrontendMessage(id, 'customer', content);
+      touchFrontendConversation(id, { needs_human_review: true, status: 'open' });
+      return { success: true, message };
     }
   },
   customerGetBookings: async () => {
@@ -779,7 +918,8 @@ export const api = {
         customer_user_id: null,
         status: 'open',
         needs_human_review: false,
-        created_at: mockLead.created_at
+        created_at: mockLead.created_at,
+        updated_at: mockLead.created_at
       };
       frontendFallbackData.conversations.unshift(mockConversation);
       frontendFallbackData.messages.push({
@@ -787,9 +927,19 @@ export const api = {
         conversation_id: conversationId,
         sender: 'customer',
         content: `New ${payload.service_type} request for ${fallbackBusiness?.name || 'selected business'}.`,
+        metadata: { source: 'marketplace_booking' },
         created_at: mockLead.created_at
       });
       frontendFallbackData.leads.unshift(mockLead);
+      const aiDraft = buildFrontendAiDraft(conversationId);
+      const aiMessage = appendFrontendMessage(conversationId, 'ai', aiDraft.suggested_reply, {
+        source: 'ai_receptionist',
+        fallback_mode: true
+      });
+      touchFrontendConversation(conversationId, {
+        ai_confidence: aiDraft.confidence,
+        needs_human_review: Boolean(aiDraft.needs_human_review)
+      });
       return {
         success: true,
         lead_id: mockLead.id,
@@ -798,7 +948,16 @@ export const api = {
         business_slug: fallbackBusiness?.slug,
         business_name: fallbackBusiness?.name,
         customer_email: payload.customer_email,
-        authenticated: false
+        authenticated: false,
+        ai_receptionist: {
+          auto_replied: true,
+          message_id: aiMessage.id,
+          confidence: aiDraft.confidence,
+          fallback_mode: true,
+          needs_human_review: Boolean(aiDraft.needs_human_review),
+          intent: aiDraft.intent,
+          missing_details: aiDraft.missing_details
+        }
       };
     }
   }

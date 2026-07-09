@@ -139,7 +139,8 @@ CREATE POLICY "Customers can insert own messages" ON messages
   FOR INSERT
   TO authenticated
   WITH CHECK (
-    conversation_id IN (
+    sender = 'customer'
+    AND conversation_id IN (
       SELECT id FROM conversations WHERE customer_user_id = auth.uid() OR customer_email = auth.email()
     )
   );
