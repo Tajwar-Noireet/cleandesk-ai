@@ -36,7 +36,7 @@ const ServicesMarketplace = () => {
     };
   }, []);
 
-  // Compute unique cities and categories for filter dropdowns
+  // Compute unique categories and locations
   const categories = useMemo(() => {
     const set = new Set();
     services.forEach((s) => {
@@ -48,8 +48,8 @@ const ServicesMarketplace = () => {
   const cities = useMemo(() => {
     const set = new Set();
     services.forEach((s) => {
-      if (s.business_city) set.add(s.business_city.trim());
-      else if (s.service_area) set.add(s.service_area.trim());
+      const cityVal = s.business_city || s.city || s.service_area;
+      if (cityVal) set.add(cityVal.trim());
     });
     return [...set].sort();
   }, [services]);
@@ -63,7 +63,7 @@ const ServicesMarketplace = () => {
 
     if (selectedCity) {
       results = results.filter(
-        (s) => s.business_city === selectedCity || s.service_area === selectedCity
+        (s) => (s.business_city || s.city || s.service_area || '').trim() === selectedCity.trim()
       );
     }
 
@@ -72,8 +72,8 @@ const ServicesMarketplace = () => {
       results = results.filter(
         (s) =>
           s.service_name.toLowerCase().includes(queryLower) ||
-          s.short_description.toLowerCase().includes(queryLower) ||
-          s.description.toLowerCase().includes(queryLower) ||
+          (s.short_description || '').toLowerCase().includes(queryLower) ||
+          (s.description || '').toLowerCase().includes(queryLower) ||
           s.business_name.toLowerCase().includes(queryLower)
       );
     }
@@ -83,103 +83,98 @@ const ServicesMarketplace = () => {
 
   return (
     <div className="marketplace-shell">
-      {isMockActive && (
+      {isMockActive && import.meta.env.DEV && (
         <div
           className="mock-banner"
           style={{
-            backgroundColor: '#EFF6FF',
-            color: '#1E40AF',
+            backgroundColor: '#FAFAFA',
+            color: 'var(--color-gray-600)',
             textAlign: 'center',
-            fontSize: '0.8rem',
-            fontWeight: '600',
-            padding: '0.5rem 1rem',
-            borderBottom: '1px solid #BFDBFE'
+            fontSize: '0.75rem',
+            fontWeight: '500',
+            padding: '0.4rem 1rem',
+            borderBottom: '1px solid var(--border-light)'
           }}
         >
           Demo marketplace data active.
         </div>
       )}
       <Navbar />
-      <main className="marketplace-page">
+      <main className="marketplace-page" style={{ padding: '4rem 0' }}>
         <section className="marketplace-container">
-          <div className="marketplace-listing-header">
+          <div className="marketplace-listing-header" style={{ marginBottom: '2.5rem' }}>
             <div>
               <span className="marketplace-eyebrow">Discover Gigs</span>
-              <h1>Find service gigs from local business owners</h1>
-              <p>Search and request specific services published by trusted providers across the marketplace.</p>
-              <div style={{ marginTop: '0.75rem' }}>
-                <Link to="/businesses" className="marketplace-card-link" style={{ fontSize: '0.85rem' }}>
-                  Or search business storefronts <ArrowRightIcon size={12} />
+              <h1 style={{ fontSize: '2.4rem', fontWeight: '700', letterSpacing: '-0.02em', margin: '0.5rem 0' }}>
+                Service Gigs Directory
+              </h1>
+              <p style={{ color: 'var(--color-gray-600)' }}>Browse public service listings and submit appointment enquiries instantly.</p>
+              <div style={{ marginTop: '0.5rem' }}>
+                <Link to="/businesses" className="marketplace-card-link" style={{ fontSize: '0.8rem', color: 'var(--color-accent)' }}>
+                  Or browse business storefronts <ArrowRightIcon size={12} />
                 </Link>
-              </div>
-            </div>
-
-            <div className="marketplace-search-box" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%', maxWidth: '420px' }}>
-              <div>
-                <label htmlFor="gig-search" className="form-label" style={{ display: 'none' }}>Search gigs</label>
-                <input
-                  id="gig-search"
-                  className="form-input"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search gigs or business name..."
-                />
-              </div>
-
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <select
-                  id="category-select"
-                  aria-label="Filter by Category"
-                  className="form-input"
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  style={{ flex: 1, padding: '0.4rem 0.6rem', fontSize: '0.8rem' }}
-                >
-                  <option value="">All Categories</option>
-                  {categories.map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-
-                <select
-                  id="city-select"
-                  aria-label="Filter by Location"
-                  className="form-input"
-                  value={selectedCity}
-                  onChange={(e) => setSelectedCity(e.target.value)}
-                  style={{ flex: 1, padding: '0.4rem 0.6rem', fontSize: '0.8rem' }}
-                >
-                  <option value="">All Locations</option>
-                  {cities.map((city) => (
-                    <option key={city} value={city}>{city}</option>
-                  ))}
-                </select>
-
-                {(searchQuery || selectedCategory || selectedCity) && (
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    onClick={() => {
-                      setSearchQuery('');
-                      setSelectedCategory('');
-                      setSelectedCity('');
-                    }}
-                    style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                  >
-                    Clear
-                  </button>
-                )}
               </div>
             </div>
           </div>
 
-          {loading && <div className="marketplace-loading">Loading service gigs...</div>}
+          {/* Premium Filter Controls */}
+          <div className="premium-marketplace-filter">
+            <input
+              type="text"
+              className="premium-filter-input"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search services or business..."
+              style={{ flex: '1 1 240px' }}
+            />
+
+            <select
+              aria-label="Filter by Category"
+              className="premium-filter-input"
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+            >
+              <option value="">All Categories</option>
+              {categories.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+
+            <select
+              aria-label="Filter by Location"
+              className="premium-filter-input"
+              value={selectedCity}
+              onChange={(e) => setSelectedCity(e.target.value)}
+            >
+              <option value="">All Locations</option>
+              {cities.map((city) => (
+                <option key={city} value={city}>{city}</option>
+              ))}
+            </select>
+
+            {(searchQuery || selectedCategory || selectedCity) && (
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => {
+                  setSearchQuery('');
+                  setSelectedCategory('');
+                  setSelectedCity('');
+                }}
+                style={{ padding: '0.45rem 1rem', fontSize: '0.8rem', borderRadius: '4px' }}
+              >
+                Clear Filters
+              </button>
+            )}
+          </div>
+
+          {loading && <div className="marketplace-loading">Loading service listings...</div>}
           {error && <div className="marketplace-error">{error}</div>}
 
           {!loading && !error && filteredServices.length === 0 && (
-            <div className="marketplace-empty-state">
-              <h2>No marketplace listings yet.</h2>
-              <p>Business owners can publish their first service from the owner dashboard.</p>
+            <div className="marketplace-empty-state" style={{ padding: '4rem 1rem', textAlign: 'center' }}>
+              <h3>No services found</h3>
+              <p>No gigs match your active filters. Try clearing filters or search terms.</p>
               {(searchQuery || selectedCategory || selectedCity) && (
                 <button
                   type="button"
@@ -191,7 +186,7 @@ const ServicesMarketplace = () => {
                   }}
                   style={{ marginTop: '1rem' }}
                 >
-                  Clear search filters
+                  Reset filters
                 </button>
               )}
             </div>
@@ -200,40 +195,53 @@ const ServicesMarketplace = () => {
           {!loading && !error && filteredServices.length > 0 && (
             <div className="marketplace-business-grid">
               {filteredServices.map((gig) => (
-                <article className="marketplace-business-card" key={gig.service_id}>
+                <article className="marketplace-business-card" key={gig.service_id || gig.id}>
                   <div className="marketplace-card-topline">
-                    <span>{gig.category || 'Service Gig'}</span>
-                    {gig.rating ? <strong>{Number(gig.rating).toFixed(1)}</strong> : null}
+                    <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--color-gray-600)', fontWeight: '600' }}>
+                      {gig.category || 'Service Gig'}
+                    </span>
+                    {gig.rating ? <strong style={{ fontSize: '0.85rem' }}>{Number(gig.rating).toFixed(1)}</strong> : null}
                   </div>
-                  <h2>{gig.service_name}</h2>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--color-primary)', display: 'block', margin: '0.2rem 0 0.5rem 0' }}>
+                  
+                  <h2 style={{ fontSize: '1.25rem', fontWeight: '600', margin: '0.5rem 0 0.15rem 0', color: 'var(--color-gray-900)' }}>
+                    {gig.service_name}
+                  </h2>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--color-gray-600)', display: 'block', marginBottom: '0.75rem' }}>
                     by {gig.business_name}
                   </span>
-                  <div style={{ fontSize: '0.65rem', color: '#9CA3AF', marginBottom: '0.5rem', fontFamily: 'monospace' }}>
-                    [Dev] Slug: {gig.business_slug} | ID: {gig.service_id}
-                  </div>
-                  <p>{gig.short_description || gig.description || 'Service gig available on CleanDesk.'}</p>
 
-                  <div className="marketplace-card-meta" style={{ marginTop: 'auto', paddingTop: '1rem' }}>
-                    <span>{gig.business_city || 'Local'}</span>
-                    {gig.duration_estimate ? <span>{gig.duration_estimate}</span> : null}
+                  {import.meta.env.DEV && (
+                    <div style={{ fontSize: '0.65rem', color: 'var(--color-gray-400)', fontFamily: 'monospace', marginBottom: '0.75rem' }}>
+                      [Dev] Slug: {gig.business_slug} | ID: {gig.service_id || gig.id}
+                    </div>
+                  )}
+
+                  <p style={{ fontSize: '0.85rem', color: 'var(--color-gray-600)', marginBottom: '1.5rem', lineHeight: '1.45' }}>
+                    {gig.short_description || gig.description || 'Public service listing on CleanDesk.'}
+                  </p>
+
+                  <div className="marketplace-card-meta" style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.75rem', color: 'var(--color-gray-600)' }}>
+                      <span>{gig.business_city || gig.city || gig.service_area || 'Local'}</span>
+                      {gig.duration_estimate ? <span>• {gig.duration_estimate}</span> : null}
+                    </div>
                     {gig.base_price ? (
-                      <span style={{ fontWeight: 'bold', color: '#10B981' }}>
-                        {gig.base_price} {gig.price_unit || ''}
+                      <span style={{ fontWeight: '600', fontSize: '1rem', color: 'var(--color-gray-900)' }}>
+                        ${gig.base_price}
                       </span>
                     ) : null}
                   </div>
 
-                  <div className="marketplace-card-actions" style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', borderTop: '1px solid var(--color-border)', paddingTop: '0.75rem' }}>
-                    <Link to={`/business/${gig.business_slug}`} className="btn-secondary marketplace-btn" style={{ flex: 1, padding: '0.4rem', fontSize: '0.75rem', textAlign: 'center' }}>
-                      View business
+                  <div className="marketplace-card-actions" style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+                    <Link to={`/business/${gig.business_slug}`} className="btn-secondary marketplace-btn" style={{ flex: 1, padding: '0.45rem', fontSize: '0.75rem', textAlign: 'center', borderRadius: '4px' }}>
+                      View Storefront
                     </Link>
                     <Link
-                      to={`/business/${gig.business_slug}/book?service=${encodeURIComponent(gig.service_name)}&serviceId=${gig.service_id}`}
+                      to={`/business/${gig.business_slug}/book?service=${encodeURIComponent(gig.service_name)}&serviceId=${gig.service_id || gig.id}`}
                       className="btn-primary marketplace-btn"
-                      style={{ flex: 1, padding: '0.4rem', fontSize: '0.75rem', textAlign: 'center' }}
+                      style={{ flex: 1, padding: '0.45rem', fontSize: '0.75rem', textAlign: 'center', borderRadius: '4px' }}
                     >
-                      Request gig
+                      Request Gig
                     </Link>
                   </div>
                 </article>

@@ -239,15 +239,17 @@ const BusinessBooking = () => {
               <span>Your enquiry is sent to this selected business and can be tracked from a customer login.</span>
             </div>
 
-            <div className="booking-context-list" style={{ marginTop: '1.5rem', borderTop: '1px solid #E2E8F0', paddingTop: '1rem' }}>
-              <span className="marketplace-eyebrow" style={{ color: '#E11D48' }}>⚡ Gig Booking Payload Trace</span>
-              <div style={{ fontSize: '0.85rem', marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                <div><strong>Business Name:</strong> {business?.name || 'Loading...'}</div>
-                <div><strong>Business Slug:</strong> {slug}</div>
-                <div><strong>Service Name:</strong> {form.service_type || 'N/A'}</div>
-                <div><strong>Service ID:</strong> {form.service_id || 'N/A'}</div>
+            {import.meta.env.DEV ? (
+              <div className="booking-context-list" style={{ marginTop: '1.5rem', borderTop: '1px solid #E2E8F0', paddingTop: '1rem' }}>
+                <span className="marketplace-eyebrow" style={{ color: '#E11D48' }}>⚡ Gig Booking Payload Trace</span>
+                <div style={{ fontSize: '0.85rem', marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  <div><strong>Business Name:</strong> {business?.name || 'Loading...'}</div>
+                  <div><strong>Business Slug:</strong> {slug}</div>
+                  <div><strong>Service Name:</strong> {form.service_type || 'N/A'}</div>
+                  <div><strong>Service ID:</strong> {form.service_id || 'N/A'}</div>
+                </div>
               </div>
-            </div>
+            ) : null}
           </aside>
 
           <section className="booking-form-card">
@@ -256,6 +258,14 @@ const BusinessBooking = () => {
               <h2>Tell {business?.name} what you need</h2>
               <p>No payment is taken here. The business will review your request and follow up.</p>
             </div>
+
+            {form.service_type ? (
+              <div style={{ backgroundColor: '#F8FAFC', border: '1px solid var(--border-light)', borderRadius: '6px', padding: '1rem', marginBottom: '1.5rem' }}>
+                <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--color-accent)', fontWeight: 'bold' }}>Selected Gig Listing</span>
+                <h3 style={{ fontSize: '1.1rem', margin: '0.2rem 0 0.1rem 0', color: 'var(--color-gray-900)' }}>{form.service_type}</h3>
+                <span style={{ fontSize: '0.8rem', color: 'var(--color-gray-600)' }}>by {business?.name}</span>
+              </div>
+            ) : null}
 
             <form className="marketplace-form" onSubmit={handleSubmit}>
               <div className="form-group">

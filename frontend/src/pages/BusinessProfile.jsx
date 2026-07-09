@@ -71,134 +71,157 @@ const BusinessProfile = () => {
   return (
     <div className="marketplace-shell">
       <Navbar />
-      <main className="marketplace-page">
-        <section className="marketplace-container business-profile-hero">
-          <div className="business-profile-main">
-            <Link to="/businesses" className="marketplace-back-link">Back to businesses</Link>
-            <span className="marketplace-eyebrow">{business.category || 'Service business'}</span>
-            <h1>{business.name}</h1>
-            <p>{business.public_description || business.description || 'Public service team on CleanDesk.'}</p>
-            <div className="business-profile-meta">
-              {business.city ? <span>{business.city}</span> : null}
-              {business.service_area ? <span>{business.service_area}</span> : null}
-              {business.rating ? <span>{Number(business.rating).toFixed(1)} rating</span> : null}
-            </div>
+      <main className="marketplace-page" style={{ padding: '4rem 0' }}>
+        <div className="marketplace-container">
+          {/* Back button */}
+          <div style={{ marginBottom: '1.5rem' }}>
+            <Link to="/businesses" className="marketplace-back-link" style={{ fontSize: '0.8rem', color: 'var(--color-gray-600)' }}>
+              ← Back to businesses
+            </Link>
           </div>
 
-          <aside className="business-profile-side">
-            <h2>Business details</h2>
-            <dl>
-              <div>
-                <dt>Category</dt>
-                <dd>{business.category || 'Service business'}</dd>
-              </div>
-              <div>
-                <dt>Service area</dt>
-                <dd>{business.service_area || business.city || 'Available by enquiry'}</dd>
-              </div>
-              <div>
-                <dt>Opening hours</dt>
-                <dd>{business.opening_hours || 'Contact business for availability'}</dd>
-              </div>
-            </dl>
-          </aside>
-        </section>
+          <div className="premium-storefront-grid">
+            <div className="business-profile-main">
+              <span className="marketplace-eyebrow" style={{ textTransform: 'uppercase', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                {business.category || 'Service business'}
+              </span>
+              <h1 style={{ fontSize: '2.5rem', fontWeight: '700', letterSpacing: '-0.03em', margin: '0.5rem 0 1rem 0', color: 'var(--color-gray-900)' }}>
+                {business.name}
+              </h1>
+              <p style={{ fontSize: '1rem', color: 'var(--color-gray-600)', lineHeight: '1.6', marginBottom: '2rem' }}>
+                {business.public_description || business.description || 'Verified storefront business on CleanDesk.'}
+              </p>
 
-        <section className="marketplace-section">
-          <div className="marketplace-container">
-            <div className="marketplace-section-heading compact">
-              <span className="marketplace-eyebrow">Services</span>
-              <h2>Request a service from {business.name}</h2>
-            </div>
+              {/* Service Gig Catalog */}
+              <div style={{ borderTop: '1px solid var(--border-light)', paddingTop: '2rem', marginTop: '2rem' }}>
+                <h2 style={{ fontSize: '1.4rem', fontWeight: '600', marginBottom: '1.25rem', color: 'var(--color-gray-900)' }}>
+                  Service Gigs
+                </h2>
+                
+                {services.length === 0 ? (
+                  <div className="marketplace-empty-state compact" style={{ padding: '2rem', border: '1px dashed var(--border-light)', borderRadius: '6px' }}>
+                    <p style={{ color: 'var(--color-gray-600)' }}>No published service listings available.</p>
+                  </div>
+                ) : (
+                  <div className="service-list-grid">
+                    {services.map((service) => (
+                      <article className="service-request-card" key={service.id} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                        <div>
+                          <div className="marketplace-card-topline" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--color-gray-600)', marginBottom: '0.5rem' }}>
+                            <span>{service.category || 'Service Gig'}</span>
+                            {(service.estimated_duration || service.duration_estimate) ? (
+                              <span>{service.estimated_duration || service.duration_estimate}</span>
+                            ) : null}
+                          </div>
+                          
+                          <h3 style={{ fontSize: '1.15rem', fontWeight: '600', margin: '0 0 0.5rem 0', color: 'var(--color-gray-900)' }}>
+                            {service.name}
+                          </h3>
+                          
+                          {service.short_description ? (
+                            <p style={{ color: 'var(--color-gray-600)', fontSize: '0.8rem', fontStyle: 'italic', marginBottom: '0.5rem' }}>
+                              {service.short_description}
+                            </p>
+                          ) : null}
+                          
+                          <p style={{ fontSize: '0.85rem', color: 'var(--color-gray-600)', lineHeight: '1.45', marginBottom: '1.25rem' }}>
+                            {service.description || service.long_description || 'Contact business for availability.'}
+                          </p>
+                        </div>
 
-            {services.length === 0 ? (
-              <div className="marketplace-empty-state compact">
-                <h3>No published service gigs yet</h3>
-                <p>This business has not published a service catalog.</p>
+                        <div className="service-request-footer" style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div>
+                            {service.base_price ? (
+                              <strong style={{ fontSize: '1rem', color: 'var(--color-gray-900)' }}>
+                                ${service.base_price} {service.price_unit || ''}
+                              </strong>
+                            ) : null}
+                          </div>
+                          
+                          <Link
+                            to={`/business/${business.slug}/book?service=${encodeURIComponent(service.name)}&serviceId=${service.id}`}
+                            className="btn-primary marketplace-btn"
+                            style={{ padding: '0.45rem 0.9rem', fontSize: '0.75rem', borderRadius: '4px' }}
+                          >
+                            Request Gig <ArrowRightIcon size={12} />
+                          </Link>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="service-list-grid">
-                {services.map((service) => (
-                  <article className="service-request-card" key={service.id}>
-                    <div>
-                      <div className="marketplace-card-topline" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#6B7280', marginBottom: '0.25rem' }}>
-                        <span>{service.category || 'Service Gig'}</span>
-                        {service.service_area ? <span>Area: {service.service_area}</span> : null}
-                      </div>
-                      <h3>{service.name}</h3>
-                      {service.short_description ? (
-                        <p style={{ fontStyle: 'italic', color: '#4B5563', fontSize: '0.8rem', marginBottom: '0.4rem' }}>
-                          {service.short_description}
+
+              {/* FAQs section */}
+              <div style={{ borderTop: '1px solid var(--border-light)', paddingTop: '2.5rem', marginTop: '2.5rem' }}>
+                <h2 style={{ fontSize: '1.4rem', fontWeight: '600', marginBottom: '1.25rem', color: 'var(--color-gray-900)' }}>
+                  Common FAQs
+                </h2>
+                {faqs.length === 0 ? (
+                  <p className="marketplace-muted-text" style={{ color: 'var(--color-gray-600)' }}>No FAQs published.</p>
+                ) : (
+                  <div className="faq-stack" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {faqs.map((faq) => (
+                      <article className="faq-card" key={faq.id} style={{ padding: '1.25rem', border: '1px solid var(--border-light)', borderRadius: '6px', backgroundColor: '#FAFAFA' }}>
+                        <h3 style={{ fontSize: '0.95rem', fontWeight: '600', margin: '0 0 0.5rem 0', color: 'var(--color-gray-900)' }}>
+                          {faq.question}
+                        </h3>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--color-gray-600)', margin: 0, lineHeight: '1.45' }}>
+                          {faq.answer}
                         </p>
-                      ) : null}
-                      <p>{service.description || service.long_description || 'Contact the business for service details.'}</p>
-                    </div>
-                    <div className="service-request-footer" style={{ marginTop: 'auto', paddingTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        {service.base_price ? (
-                          <strong style={{ display: 'block', fontSize: '1rem', color: '#10B981' }}>
-                            {service.base_price} {service.price_unit || ''}
-                          </strong>
-                        ) : null}
-                        {(service.estimated_duration || service.duration_estimate) ? (
-                          <span style={{ fontSize: '0.75rem', color: '#6B7280' }}>
-                            {service.estimated_duration || service.duration_estimate}
-                          </span>
-                        ) : null}
-                      </div>
-                      <Link
-                        to={`/business/${business.slug}/book?service=${encodeURIComponent(service.name)}&serviceId=${service.id}`}
-                        className="btn-primary marketplace-btn"
-                        style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                      >
-                        Request gig <ArrowRightIcon size={12} />
-                      </Link>
-                    </div>
-                  </article>
-                ))}
+                      </article>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        </section>
-
-        <section className="marketplace-section marketplace-section-muted">
-          <div className="marketplace-container business-profile-lower-grid">
-            <div>
-              <div className="marketplace-section-heading compact">
-                <span className="marketplace-eyebrow">FAQs</span>
-                <h2>Common questions</h2>
-              </div>
-              {faqs.length === 0 ? (
-                <p className="marketplace-muted-text">This business has not published FAQs yet.</p>
-              ) : (
-                <div className="faq-stack">
-                  {faqs.map((faq) => (
-                    <article className="faq-card" key={faq.id}>
-                      <h3>{faq.question}</h3>
-                      <p>{faq.answer}</p>
-                    </article>
-                  ))}
-                </div>
-              )}
             </div>
 
-            <aside className="business-trust-card">
-              <h2>Why request through CleanDesk?</h2>
-              <div>
-                <CheckIcon size={15} />
-                <span>Your enquiry is routed to this business, not a generic inbox.</span>
-              </div>
-              <div>
-                <CheckIcon size={15} />
-                <span>You can create a customer login and track requests across businesses.</span>
-              </div>
-              <div>
-                <CheckIcon size={15} />
-                <span>Owners manage leads, conversations, and booking updates in one workspace.</span>
+            {/* Sticky Sidebar details */}
+            <aside className="premium-storefront-aside">
+              <h2 style={{ fontSize: '1rem', fontWeight: '600', borderBottom: '1px solid var(--border-light)', paddingBottom: '0.5rem', margin: 0, color: 'var(--color-gray-900)' }}>
+                Storefront Info
+              </h2>
+              
+              <ul className="storefront-meta-list">
+                <li>
+                  <strong>Location</strong>
+                  <span>{business.city || 'Available by enquiry'}</span>
+                </li>
+                <li>
+                  <strong>Service area</strong>
+                  <span>{business.service_area || 'Contact business'}</span>
+                </li>
+                <li>
+                  <strong>Hours</strong>
+                  <span>{business.opening_hours || 'Mon - Fri'}</span>
+                </li>
+                {business.rating ? (
+                  <li>
+                    <strong>Rating</strong>
+                    <span>{Number(business.rating).toFixed(1)} / 5</span>
+                  </li>
+                ) : null}
+              </ul>
+
+              <div style={{ marginTop: '0.5rem', borderTop: '1px solid var(--border-light)', paddingTop: '1rem' }}>
+                <h3 style={{ fontSize: '0.85rem', fontWeight: '600', marginBottom: '0.5rem', color: 'var(--color-gray-900)' }}>
+                  CleanDesk verified
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.75rem', color: 'var(--color-gray-600)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <CheckIcon size={12} /> Direct routing to {business.name}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <CheckIcon size={12} /> Follow progress via Customer Portal
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <CheckIcon size={12} /> Secure data & communication
+                  </div>
+                </div>
               </div>
             </aside>
           </div>
-        </section>
+        </div>
       </main>
     </div>
   );

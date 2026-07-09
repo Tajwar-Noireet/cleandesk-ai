@@ -1,64 +1,71 @@
-# CleanDesk AI (MVP Setup & Architecture)
+# CleanDesk AI
 
-CleanDesk AI is an intelligent, startup-grade AI receptionist and lead-capture platform built specifically for local home cleaning businesses. It helps companies automate standard pricing, coverage, and rescheduling inquiries, captures qualified booking leads, and escalates complaints or complex customer conversations directly to the business owner.
+CleanDesk AI is an intelligent, premium two-sided service marketplace and operations CRM built for local business owners and customers. It features a public storefront directory for discovering service gigs, an automated **AI Receptionist** that replies to bookings, and a unified owner dashboard to manage leads, view conversations, and draft responses.
 
-## Project Structure
+---
 
-The codebase is organized as a modular monorepo:
+## 🏗️ Architecture Overview
+
+CleanDesk AI uses a modular, monorepo architecture:
 
 ```
-cleandesk-ai/
-  ├── frontend/       # React + Vite client-side SPA
-  ├── backend/        # Node.js + Express API server
-  ├── ai-service/     # Python FastAPI NLP & extraction service
-  ├── docs/           # DB schemas and project documentation
-  └── README.md       # Root overview & setup instructions
+                  ┌──────────────────────────┐
+                  │  React + Vite Frontend   │
+                  └─────────────┬────────────┘
+                                │
+                      HTTP APIs │ (CORS Allowed)
+                                ▼
+                  ┌──────────────────────────┐
+                  │    Express API Server    │
+                  └──────┬────────────┬──────┘
+                         │            │
+       SQL Queries / RLS │            │ HTTP calls
+                         ▼            ▼
+                  ┌──────────┐  ┌──────────────────────────┐
+                  │ Supabase │  │   FastAPI AI Service     │
+                  └──────────┘  └─────────────┬────────────┘
+                                              │
+                                   Completion │ HTTP
+                                              ▼
+                                       ┌──────────┐
+                                       │  OpenAI  │
+                                       └──────────┘
 ```
 
 ---
 
-## 🛠️ Getting Started & Local Launch
+## 🛠️ Tech Stack
+- **Frontend**: React (v19) + Vite, React Router (v7), Motion for React (Animations), Vanilla CSS (Monochrome layout and blue accenting).
+- **Backend API**: Node.js + Express, Supabase JS client.
+- **AI NLP Service**: Python FastAPI, OpenAI API SDK.
+- **Database**: Supabase PostgreSQL with Row Level Security (RLS) policies.
 
-CleanDesk AI is designed to run in **offline mock modes** gracefully. If you only launch the frontend, it uses local client fallbacks. Running the backend and AI services activates mock in-memory stores and local NLP rule-matching respectively, with placeholders and code comments ready for Supabase/OpenAI integration.
+---
+
+## 🗄️ Database Setup & Migration Order
+
+To set up the Supabase database instance, run the migration scripts located in the `docs/` directory in this exact order:
+
+1. **`docs/schema.sql`** (Initial table setups: users, businesses, leads, messages, conversations)
+2. **`docs/marketplace_migration.sql`** (Storefront and public directory enhancements)
+3. **`docs/service_gigs_migration.sql`** (Owner-created marketplace service gigs linking)
+4. **`docs/conversation_messaging_migration.sql`** (Thread message layouts and metadata triggers)
+5. **`docs/rls_policies.sql`** (Row Level Security boundary isolation policies)
+
+---
+
+## 🚀 Local Quickstart Setup
 
 ### Prerequisites
-- **Node.js** (v18 or higher recommended)
-- **NPM** (v9 or higher)
-- **Python** (v3.9 or higher recommended)
+- **Node.js** (v18 or higher)
+- **Python** (v3.9 or higher)
 
----
-
-### 1. Frontend Setup (React + Vite)
-The frontend contains landing pages, interactive client chat widgets, and the owner management dashboard.
-
-1. Navigate to the frontend directory:
-   ```bash
-   cd frontend
-   ```
-2. Copy the environment variables:
-   ```bash
-   cp .env.example .env
-   ```
-3. Install dependencies:
-   ```bash
-   npm install
-   ```
-4. Start the Vite dev server:
-   ```bash
-   npm run dev
-   ```
-   Open `http://localhost:5173` in your browser.
-
----
-
-### 2. Backend Setup (Node.js + Express)
-The backend routes API endpoints, manages CORS/middleware, and acts as the lead orchestrator.
-
+### 1. Backend Server Setup
 1. Navigate to the backend directory:
    ```bash
    cd backend
    ```
-2. Copy the environment variables:
+2. Copy the example environment variables:
    ```bash
    cp .env.example .env
    ```
@@ -66,69 +73,78 @@ The backend routes API endpoints, manages CORS/middleware, and acts as the lead 
    ```bash
    npm install
    ```
-4. Start the backend dev server (monitored by Nodemon):
+4. Start the backend:
    ```bash
    npm run dev
    ```
-   The backend API will run on `http://localhost:5000`. You can inspect the API health at `http://localhost:5000/health`.
+   *Runs on `http://localhost:5000`. Health endpoint: `http://localhost:5000/health`*
 
----
-
-### 3. AI Service Setup (FastAPI)
-The AI service manages slot-extraction (name, phone, address, services, and preferred dates) and intent classification.
-
+### 2. AI Receptionist Service Setup
 1. Navigate to the ai-service directory:
    ```bash
    cd ai-service
    ```
-2. Copy the environment variables:
+2. Create and activate a Python virtual environment:
    ```bash
-   cp .env.example .env
+   python -m venv venv
+   .\venv\Scripts\activate   # Windows (PowerShell)
+   source venv/bin/activate  # macOS / Linux
    ```
-3. Create and activate a Python virtual environment:
-   - **Windows (CMD/PowerShell)**:
-     ```powershell
-     python -m venv venv
-     .\venv\Scripts\activate
-     ```
-   - **macOS/Linux**:
-     ```bash
-     python -m venv venv
-     source venv/bin/activate
-     ```
-4. Install packages:
+3. Install packages:
    ```bash
    pip install -r requirements.txt
    ```
-5. Run the FastAPI server:
+4. Start the FastAPI server:
    ```bash
    uvicorn main:app --reload --port 8000
    ```
-   FastAPI will launch on `http://localhost:8000`. Verify its state at `http://localhost:8000/health`.
+   *Runs on `http://localhost:8000`. Health endpoint: `http://localhost:8000/health`*
+
+### 3. Frontend Client Setup
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+2. Copy the example environment variables:
+   ```bash
+   cp .env.example .env
+   ```
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
+4. Start Vite developer server:
+   ```bash
+   npm run dev
+   ```
+   *Runs on `http://localhost:5173`*
 
 ---
 
-## 🗄️ Database Schema & Supabase Integration
+## 🗺️ Key Routes Map
 
-The SQL schema configuration is stored at [docs/schema.sql](file:///c:/Users/tazwa/cleandesk-ai/docs/schema.sql). 
+### Public Routes
+- `/` - Landing page with "From request to response" interactive scroll-driven story.
+- `/services` - Gigs discovery marketplace with text search and category/location filters.
+- `/businesses` - Storefront profiles business directory.
+- `/business/:slug` - Public business portfolio, FAQs, and gig service catalog.
+- `/business/:slug/book` - Strict checkout form with service gig pre-selections.
 
-For step-by-step instructions on setting up your Supabase project, executing migrations, configuring environment keys, and running tests, please refer to the detailed **[Phase 3 Supabase Integration Guide](file:///c:/Users/tazwa/cleandesk-ai/docs/PHASE_3_SUPABASE.md)**.
+### Owner Dashboard (Authenticated)
+- `/dashboard` - CRM leads overview.
+- `/dashboard/conversations` - 3-column inbox assistant workspace.
+
+### Customer Support Portal
+- `/customer/login` - Booking tracking login.
+- `/customer/dashboard` - Active requests checklist tracking.
+- `/customer/conversations` - Real-time client support thread.
 
 ---
 
-## 🤖 Phase 4: Real AI Intelligence & Support Automation
-
-CleanDesk AI supports fully automated OpenAI-based customer booking interactions with structured slot extraction (capturing name, phone, address, etc.) and support escalations.
-
-For details on the prompt engineering layout, slot capturing order rules, support escalation triggers, and manual validation test scripts, please check the **[Phase 4 AI Intelligence & Automation Guide](file:///c:/Users/tazwa/cleandesk-ai/docs/PHASE_4_AI_INTELLIGENCE.md)**.
-
----
-
-## 🔒 Phase 5: Productization & Security (Multi-Tenant & Widget Embeds)
-
-CleanDesk AI supports secure multi-tenant isolation, real Supabase user signup/login, backend token verification, and floating client-facing script embeds:
-- **Owner Authentication**: Authenticated owner profiles are secured on the client via Supabase Auth and decoded securely via JWTs in the backend Express middleware.
-- **Tenant Isolation**: Backend controllers restrict dashboard query mutations strictly to the creator of the business profile.
-- **Embeddable Chat Receptionist**: Lightweight client script widget served statically from `/widget.js` to float customer chat widgets on external websites.
-
-For details on configuration keys, Row Level Security policies, token verification, and widget sandbox verification, please refer to the detailed **[Phase 5 Productization & Security Guide](file:///c:/Users/tazwa/cleandesk-ai/docs/PHASE_5_PRODUCTIZATION.md)**.
+## 🔮 Demo Workflow & Storytelling
+1. **Discover**: Browse `/services` and search for local owner-created gigs.
+2. **Book**: Select a gig, preview details, and submit a booking request at `/business/:slug/book`.
+3. **Acknowledge**: An AI receptionist instantly intercepts the booking and submits a response acknowledging the customer's request.
+4. **CRM Capture**: The business owner logs in to `/dashboard` to see the lead captured under "Needs Review".
+5. **Manage Thread**: Owner opens `/dashboard/conversations`, reviews the thread, generates an AI draft response, edits it, and sends the reply.
+6. **Track Status**: Customer signs in to the portal to follow the conversation in real-time.

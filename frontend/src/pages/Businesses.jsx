@@ -28,7 +28,7 @@ const Businesses = () => {
           setServices(servicesData || []);
         }
       } catch (err) {
-        if (active) setError(err.message || 'Unable to load marketplace data.');
+        if (active) setError(err.message || 'Unable to load storefront database.');
       } finally {
         if (active) setLoading(false);
       }
@@ -60,58 +60,69 @@ const Businesses = () => {
 
   return (
     <div className="marketplace-shell">
-      {isMockActive && (
+      {isMockActive && import.meta.env.DEV && (
         <div
           className="mock-banner"
           style={{
-            backgroundColor: '#EFF6FF',
-            color: '#1E40AF',
+            backgroundColor: '#FAFAFA',
+            color: 'var(--color-gray-600)',
             textAlign: 'center',
-            fontSize: '0.8rem',
-            fontWeight: '600',
-            padding: '0.5rem 1rem',
-            borderBottom: '1px solid #BFDBFE'
+            fontSize: '0.75rem',
+            fontWeight: '500',
+            padding: '0.4rem 1rem',
+            borderBottom: '1px solid var(--border-light)'
           }}
         >
           Demo marketplace data active.
         </div>
       )}
       <Navbar />
-      <main className="marketplace-page">
+      <main className="marketplace-page" style={{ padding: '4rem 0' }}>
         <section className="marketplace-container">
-          <div className="marketplace-listing-header">
+          <div className="marketplace-listing-header" style={{ marginBottom: '2.5rem' }}>
             <div>
-              <span className="marketplace-eyebrow">Browse Businesses</span>
-              <h1>Find the right service team</h1>
-              <p>Search public CleanDesk businesses by name, category, city, or service area.</p>
-              <div style={{ marginTop: '0.75rem' }}>
-                <Link to="/services" className="marketplace-card-link" style={{ fontSize: '0.85rem' }}>
+              <span className="marketplace-eyebrow">Directory</span>
+              <h1 style={{ fontSize: '2.4rem', fontWeight: '700', letterSpacing: '-0.02em', margin: '0.5rem 0' }}>
+                Service Storefronts
+              </h1>
+              <p style={{ color: 'var(--color-gray-600)' }}>Browse local businesses and view their dynamic service catalogs.</p>
+              <div style={{ marginTop: '0.5rem' }}>
+                <Link to="/services" className="marketplace-card-link" style={{ fontSize: '0.8rem', color: 'var(--color-accent)' }}>
                   Browse individual service gigs <ArrowRightIcon size={12} />
                 </Link>
               </div>
             </div>
-            <div className="marketplace-search-box">
-              <label htmlFor="business-search">Search businesses</label>
-              <input
-                id="business-search"
-                className="form-input"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search by name, category, or city"
-              />
-            </div>
           </div>
 
-          {loading && <div className="marketplace-loading">Loading businesses...</div>}
+          {/* Premium Filter Search */}
+          <div className="premium-marketplace-filter">
+            <input
+              type="text"
+              className="premium-filter-input"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search storefronts by name, category, or city..."
+              style={{ flex: '1' }}
+            />
+            {query && (
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setQuery('')}
+                style={{ padding: '0.45rem 1rem', fontSize: '0.8rem', borderRadius: '4px' }}
+              >
+                Clear Search
+              </button>
+            )}
+          </div>
+
+          {loading && <div className="marketplace-loading">Loading directory listings...</div>}
           {error && <div className="marketplace-error">{error}</div>}
 
           {!loading && !error && filteredBusinesses.length === 0 && (
-            <div className="marketplace-empty-state">
-              <h2>No businesses found</h2>
-              <p>Try a different search term or clear the filter to see every public business.</p>
-              <button type="button" className="btn-secondary" onClick={() => setQuery('')}>
-                Clear search
-              </button>
+            <div className="marketplace-empty-state" style={{ padding: '4rem 1rem', textAlign: 'center' }}>
+              <h3>No storefronts found</h3>
+              <p>No business profiles match your search criteria. Try clearing search terms.</p>
             </div>
           )}
 
@@ -125,36 +136,44 @@ const Businesses = () => {
                 return (
                   <article className="marketplace-business-card" key={business.id}>
                     <div className="marketplace-card-topline">
-                      <span>{business.category || 'Service business'}</span>
-                      {business.rating ? <strong>{Number(business.rating).toFixed(1)}</strong> : null}
+                      <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--color-gray-600)', fontWeight: '600' }}>
+                        {business.category || 'Service business'}
+                      </span>
+                      {business.rating ? <strong style={{ fontSize: '0.85rem' }}>{Number(business.rating).toFixed(1)}</strong> : null}
                     </div>
-                    <h2>{business.name}</h2>
-                    <p>{business.public_description || business.description || 'Public service team on CleanDesk.'}</p>
+
+                    <h2 style={{ fontSize: '1.25rem', fontWeight: '600', margin: '0.5rem 0', color: 'var(--color-gray-900)' }}>
+                      {business.name}
+                    </h2>
+                    
+                    <p style={{ fontSize: '0.85rem', color: 'var(--color-gray-600)', marginBottom: '1.25rem', lineHeight: '1.45' }}>
+                      {business.public_description || business.description || 'Public service storefront on CleanDesk.'}
+                    </p>
 
                     {count > 0 ? (
-                      <div style={{ margin: '0.75rem 0', fontSize: '0.75rem', color: '#4B5563' }}>
-                        <strong>{count} service gig{count > 1 ? 's' : ''} available</strong>:
-                        <span style={{ fontStyle: 'italic', display: 'block', marginTop: '0.1rem' }}>
+                      <div style={{ margin: '1rem 0', fontSize: '0.8rem', borderTop: '1px solid var(--border-light)', paddingTop: '0.75rem' }}>
+                        <strong style={{ color: 'var(--color-gray-900)' }}>{count} service gig{count > 1 ? 's' : ''}</strong>
+                        <span style={{ fontStyle: 'italic', display: 'block', marginTop: '0.15rem', color: 'var(--color-gray-600)' }}>
                           {sampleList}
                         </span>
                       </div>
                     ) : (
-                      <div style={{ margin: '0.75rem 0', fontSize: '0.75rem', color: '#9CA3AF', fontStyle: 'italic' }}>
-                        No published service gigs yet.
+                      <div style={{ margin: '1rem 0', fontSize: '0.8rem', color: 'var(--color-gray-400)', fontStyle: 'italic', borderTop: '1px solid var(--border-light)', paddingTop: '0.75rem' }}>
+                        No published service gigs.
                       </div>
                     )}
 
-                    <div className="marketplace-card-meta" style={{ marginTop: 'auto' }}>
+                    <div className="marketplace-card-meta" style={{ marginTop: 'auto', paddingTop: '0.5rem', display: 'flex', gap: '0.5rem', fontSize: '0.75rem', color: 'var(--color-gray-600)' }}>
                       <span>{business.city || 'Local'}</span>
-                      {business.service_area ? <span>{business.service_area}</span> : null}
+                      {business.service_area ? <span>• {business.service_area}</span> : null}
                     </div>
 
-                    <div className="marketplace-card-actions" style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', borderTop: '1px solid var(--color-border)', paddingTop: '0.75rem' }}>
-                      <Link to={`/business/${business.slug}`} className="btn-secondary marketplace-btn" style={{ flex: 1, padding: '0.4rem', fontSize: '0.75rem', textAlign: 'center' }}>
-                        View profile
+                    <div className="marketplace-card-actions" style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', borderTop: '1px solid var(--border-light)', paddingTop: '0.75rem' }}>
+                      <Link to={`/business/${business.slug}`} className="btn-secondary marketplace-btn" style={{ flex: 1, padding: '0.45rem', fontSize: '0.75rem', textAlign: 'center', borderRadius: '4px' }}>
+                        View Profile
                       </Link>
-                      <Link to="/services" className="btn-primary marketplace-btn" style={{ flex: 1, padding: '0.4rem', fontSize: '0.75rem', textAlign: 'center' }}>
-                        Browse services
+                      <Link to="/services" className="btn-primary marketplace-btn" style={{ flex: 1, padding: '0.45rem', fontSize: '0.75rem', textAlign: 'center', borderRadius: '4px' }}>
+                        Browse Services
                       </Link>
                     </div>
                   </article>
