@@ -21,7 +21,8 @@ const senderLabel = (sender) => {
 
 const getMessageSender = (msg) => {
   if (!msg) return 'system';
-  const val = msg.sender || msg.sender_type || msg.role || msg.message_type || 'system';
+  // Schema uses msg.sender — read it first, fall back to legacy field names
+  const val = msg.sender ?? msg.sender_type ?? msg.role ?? msg.message_type ?? 'system';
   const clean = String(val).toLowerCase().trim();
   if (clean === 'customer' || clean === 'ai' || clean === 'owner' || clean === 'system') {
     return clean;
@@ -31,7 +32,8 @@ const getMessageSender = (msg) => {
 
 const getMessageContent = (msg) => {
   if (!msg) return '';
-  return msg.content || msg.body || msg.text || '';
+  // Schema uses msg.content — read it first, fall back to legacy field names
+  return msg.content ?? msg.body ?? msg.text ?? '';
 };
 
 const normalizeConfidence = (value) => {

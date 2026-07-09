@@ -2344,6 +2344,44 @@ a {
   background-color: #F9FAFB;
 }
 
+/* AI receptionist messages — dashed blue border, left-aligned */
+.customer-message.ai {
+  align-self: flex-start;
+  background-color: #F8FAFC;
+  border-color: #3B82F6;
+  border-style: dashed;
+}
+
+.customer-message.ai span {
+  color: #0284C7;
+}
+
+/* Owner/team messages in customer portal — dark, left-aligned */
+.customer-message.owner {
+  align-self: flex-start;
+  background-color: #111827;
+  border-color: #1F2937;
+  color: #FFFFFF;
+}
+
+.customer-message.owner span {
+  color: #9CA3AF;
+}
+
+.customer-message.owner p {
+  color: #F9FAFB;
+}
+
+/* System messages — neutral pill-style */
+.customer-message.system {
+  align-self: center;
+  background-color: #F3F4F6;
+  border-color: #E5E7EB;
+  font-size: 0.78rem;
+  text-align: center;
+  max-width: 70%;
+}
+
 .customer-message span {
   display: block;
   color: #6B7280;

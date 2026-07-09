@@ -477,6 +477,131 @@ exports.getCustomerConversationDetail = async (req, res) => {
   }
 };
 
+
+// ---------------------------------------------------------------------------
+// AI follow-up helper — triggered after every customer message in an existing
+// conversation. Never triggered by owner or AI sender (loop guard).
+// ---------------------------------------------------------------------------
+const maybeCreateAiFollowUpReply = async ({ conversationId, conversation, lead, newCustomerMessage }) => {
+  const enabled = process.env.AUTO_AI_REPLY_ON_ENQUIRY !== 'false';
+  if (!enabled) return { auto_replied: false, reason: 'disabled' };
+
+  try {
+    // Fetch business record for this conversation
+    let business = null;
+    if (isSupabaseConfigured()) {
+      const { data: bizData } = await supabase
+        .from('businesses')
+        .select('id, name, slug, category, city, service_area, public_description, opening_hours')
+        .eq('id', conversation.business_id)
+        .limit(1);
+      business = bizData && bizData.length > 0 ? bizData[0] : null;
+    } else {
+      business = mockStore.businesses.find((b) => b.id === conversation.business_id) || null;
+    }
+
+    if (!business) return { auto_replied: false, reason: 'business_not_found' };
+
+    // Fetch recent message history (last 20 messages) — includes the new customer message
+    let recentMessages = [];
+    if (isSupabaseConfigured()) {
+      const { data: msgData } = await supabase
+        .from('messages')
+        .select('id, conversation_id, sender, content, created_at')
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: true })
+        .limit(20);
+      recentMessages = msgData || [];
+    } else {
+      recentMessages = mockStore.messages
+        .filter((m) => m.conversation_id === conversationId)
+        .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+        .slice(-20);
+    }
+
+    // If the most recent message is NOT from the customer, skip (prevents loops)
+    const lastMsg = recentMessages[recentMessages.length - 1];
+    if (lastMsg && lastMsg.sender !== 'customer') {
+      return { auto_replied: false, reason: 'last_message_not_customer' };
+    }
+
+    const [services, faqs] = await Promise.all([
+      getBusinessServicesForAi(business.id),
+      getBusinessFaqsForAi(business.id)
+    ]);
+
+    const draft = await generateReceptionistDraft(
+      {
+        conversation,
+        business,
+        lead: lead || {},
+        service: null,
+        messages: recentMessages,
+        services,
+        faqs
+      },
+      {
+        prompt: newCustomerMessage
+      }
+    );
+
+    if (!draft?.suggested_reply) {
+      return { auto_replied: false, reason: 'empty_draft' };
+    }
+
+    // If needs human review, mark conversation but do NOT auto-send the message
+    if (draft.needs_human_review) {
+      await safeUpdateConversationRecord(conversationId, {
+        needs_human_review: true,
+        ai_confidence: draft.confidence ?? null
+      });
+      return {
+        auto_replied: false,
+        needs_human_review: true,
+        reason: 'needs_human_review',
+        draft_preview: draft.suggested_reply,
+        confidence: draft.confidence ?? null,
+        intent: draft.intent || null
+      };
+    }
+
+    // Confident — save the AI message
+    const aiMessage = await createConversationMessage(
+      conversationId,
+      'ai',
+      draft.suggested_reply,
+      {
+        source: 'ai_receptionist',
+        trigger: 'customer_follow_up',
+        mode: draft.fallback_mode ? 'fallback' : 'openai',
+        confidence: draft.confidence ?? null,
+        intent: draft.intent || null,
+        needs_human_review: false
+      }
+    );
+
+    await safeUpdateConversationRecord(conversationId, {
+      ai_confidence: draft.confidence ?? null,
+      needs_human_review: false
+    });
+
+    return {
+      auto_replied: true,
+      message_id: aiMessage.id,
+      message: aiMessage,
+      confidence: draft.confidence ?? null,
+      fallback_mode: Boolean(draft.fallback_mode),
+      needs_human_review: false,
+      intent: draft.intent || null,
+      missing_details: draft.missing_details || []
+    };
+  } catch (err) {
+    // AI failure must never block the customer message — log and continue
+    console.warn('[AI follow-up] Skipped:', err.message);
+    return { auto_replied: false, error: err.message };
+  }
+};
+
 exports.sendCustomerConversationMessage = async (req, res) => {
   try {
     const user = req.user;
@@ -541,15 +666,37 @@ exports.sendCustomerConversationMessage = async (req, res) => {
       }
     }
 
+    // 1. Save the customer message
     const message = await createConversationMessage(id, 'customer', content);
-    const updatedConversation = await safeUpdateConversationRecord(id, {
-      needs_human_review: true,
-      status: 'open'
+
+    // 2. Trigger AI follow-up (non-blocking — failure cannot reject the response)
+    const aiResult = await maybeCreateAiFollowUpReply({
+      conversationId: id,
+      conversation,
+      lead,
+      newCustomerMessage: content
     });
+
+    // 3. Update conversation status
+    const conversationUpdates = { status: 'open' };
+    if (!aiResult.auto_replied) {
+      // AI did not reply — flag for owner human review
+      conversationUpdates.needs_human_review = true;
+    }
+    const updatedConversation = await safeUpdateConversationRecord(id, conversationUpdates);
 
     return res.status(201).json({
       success: true,
       message,
+      ai_reply: aiResult.auto_replied ? aiResult.message : null,
+      ai_result: {
+        auto_replied: aiResult.auto_replied,
+        needs_human_review: aiResult.needs_human_review || false,
+        confidence: aiResult.confidence ?? null,
+        intent: aiResult.intent || null,
+        fallback_mode: aiResult.fallback_mode || false,
+        reason: aiResult.reason || null
+      },
       conversation: updatedConversation || conversation,
       lead
     });
@@ -557,6 +704,8 @@ exports.sendCustomerConversationMessage = async (req, res) => {
     return res.status(err.status || 500).json({ error: err.message });
   }
 };
+
+
 
 exports.getCustomerBookings = async (req, res) => {
   try {

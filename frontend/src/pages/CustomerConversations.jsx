@@ -21,7 +21,8 @@ const messageLabel = (sender) => {
 
 const getMessageSender = (msg) => {
   if (!msg) return 'system';
-  const val = msg.sender || msg.sender_type || msg.role || msg.message_type || 'system';
+  // Schema uses msg.sender — read it first, fall back to legacy field names
+  const val = msg.sender ?? msg.sender_type ?? msg.role ?? msg.message_type ?? 'system';
   const clean = String(val).toLowerCase().trim();
   if (clean === 'customer' || clean === 'ai' || clean === 'owner' || clean === 'system') {
     return clean;
@@ -31,7 +32,8 @@ const getMessageSender = (msg) => {
 
 const getMessageContent = (msg) => {
   if (!msg) return '';
-  return msg.content || msg.body || msg.text || '';
+  // Schema uses msg.content — read it first, fall back to legacy field names
+  return msg.content ?? msg.body ?? msg.text ?? '';
 };
 
 const groupByBusiness = (conversations) => {
@@ -138,8 +140,23 @@ const CustomerConversations = () => {
     try {
       setSending(true);
       setError('');
-      await api.customerSendConversationMessage(activeConversationId, composer);
+      const result = await api.customerSendConversationMessage(activeConversationId, composer);
       setComposer('');
+
+      // Optimistically append the new messages to the thread so they appear
+      // immediately — without waiting for the full reload round-trip.
+      if (result?.message || result?.ai_reply) {
+        setActiveDetail((prev) => {
+          if (!prev) return prev;
+          const existing = prev.messages || [];
+          const appended = [...existing];
+          if (result.message) appended.push(result.message);
+          if (result.ai_reply) appended.push(result.ai_reply);
+          return { ...prev, messages: appended };
+        });
+      }
+
+      // Full reload to sync the sidebar list preview and conversation metadata
       await Promise.all([
         loadConversations(activeConversationId),
         loadDetail()
@@ -150,6 +167,7 @@ const CustomerConversations = () => {
       setSending(false);
     }
   };
+
 
   if (loading) {
     return (
@@ -271,8 +289,14 @@ const CustomerConversations = () => {
                         if (!message) return null;
                         const normalizedSender = getMessageSender(message);
                         const normalizedContent = getMessageContent(message);
+                        // Each sender type gets its own CSS modifier class:
+                        // 'customer' → blue bubble right-aligned
+                        // 'ai'       → dashed blue border, left-aligned (AI receptionist)
+                        // 'owner'    → dark bubble, left-aligned
+                        // 'system'   → neutral fallback
+                        const senderClass = normalizedSender; // 'customer' | 'ai' | 'owner' | 'system'
                         return (
-                          <div className={`customer-message ${normalizedSender === 'customer' ? 'customer' : 'business'}`} key={message.id || Math.random().toString()}>
+                          <div className={`customer-message ${senderClass}`} key={message.id || Math.random().toString()}>
                             <span>{messageLabel(normalizedSender)}</span>
                             <p>{normalizedContent}</p>
                             <time>{formatDate(message.created_at)}</time>
