@@ -525,10 +525,40 @@ const maybeCreateAiFollowUpReply = async ({ conversationId, conversation, lead, 
       return { auto_replied: false, reason: 'last_message_not_customer' };
     }
 
+    // ---------------------------------------------------------------------------
+    // Safety limiter: prevent AI from becoming an uncontrolled chatbot.
+    // Count how many consecutive AI messages appeared immediately BEFORE the
+    // current customer message (i.e. tail of the thread before this send).
+    // If >= MAX, mark needs_human_review and stop auto-sending.
+    // Owner can still generate drafts manually from the dashboard.
+    // Configurable via AI_MAX_CONSECUTIVE_REPLIES env var (default: 2).
+    // ---------------------------------------------------------------------------
+    const MAX_CONSECUTIVE_AI_REPLIES = Math.max(1, parseInt(process.env.AI_MAX_CONSECUTIVE_REPLIES || '2', 10));
+    const messagesBeforeCurrent = recentMessages.slice(0, -1); // exclude the new customer message
+    let consecutiveAiCount = 0;
+    for (let i = messagesBeforeCurrent.length - 1; i >= 0; i--) {
+      if (messagesBeforeCurrent[i].sender === 'ai') {
+        consecutiveAiCount++;
+      } else {
+        break; // stop as soon as we hit a non-AI message
+      }
+    }
+    if (consecutiveAiCount >= MAX_CONSECUTIVE_AI_REPLIES) {
+      await safeUpdateConversationRecord(conversationId, { needs_human_review: true });
+      return {
+        auto_replied: false,
+        needs_human_review: true,
+        reason: 'consecutive_ai_limit_reached',
+        consecutive_ai_count: consecutiveAiCount,
+        limit: MAX_CONSECUTIVE_AI_REPLIES
+      };
+    }
+
     const [services, faqs] = await Promise.all([
       getBusinessServicesForAi(business.id),
       getBusinessFaqsForAi(business.id)
     ]);
+
 
     const draft = await generateReceptionistDraft(
       {
