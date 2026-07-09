@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Home from './pages/Home';
+import Businesses from './pages/Businesses';
+import BusinessProfile from './pages/BusinessProfile';
+import BusinessBooking from './pages/BusinessBooking';
 import Demo from './pages/Demo';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -18,6 +21,7 @@ import CustomerBookings from './pages/CustomerBookings';
 import CustomerProfile from './pages/CustomerProfile';
 import CustomerBooking from './pages/CustomerBooking';
 import BookingConfirmation from './pages/BookingConfirmation';
+import ServicesMarketplace from './pages/ServicesMarketplace';
 
 import { supabase } from './supabaseClient';
 
@@ -137,6 +141,10 @@ function App() {
       <Routes>
         {/* Public Marketing & Demo Routes */}
         <Route path="/" element={<Home />} />
+        <Route path="/services" element={<ServicesMarketplace />} />
+        <Route path="/businesses" element={<Businesses />} />
+        <Route path="/business/:slug/book" element={<BusinessBooking />} />
+        <Route path="/business/:slug" element={<BusinessProfile />} />
         <Route path="/demo" element={<Demo />} />
         <Route path="/login" element={<Login />} />
 

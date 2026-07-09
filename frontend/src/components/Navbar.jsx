@@ -4,38 +4,27 @@ import Logo from './Logo';
 
 const Navbar = () => {
   return (
-    <nav className="navbar" style={{ borderBottom: '1px solid var(--color-border)', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF' }}>
-      <div className="navbar-container" style={{ width: '100%', maxWidth: '1200px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 2rem', boxSizing: 'border-box' }}>
-        {/* Left: CleanDesk Logo & Wordmark */}
-        <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }}>
+    <nav className="navbar public-navbar">
+      <div className="navbar-container public-navbar-container">
+        <Link to="/" className="public-navbar-brand">
           <Logo size={28} dark={false} showText={true} />
         </Link>
 
-        {/* Right: navigation links */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-          <a href="#workflow" className="nav-text-link" style={{ fontSize: '0.875rem', fontWeight: '500', color: '#6B7280', textDecoration: 'none', transition: 'color 0.15s ease' }}>
-            Product
-          </a>
-          <Link to="/demo" className="nav-text-link" style={{ fontSize: '0.875rem', fontWeight: '500', color: '#6B7280', textDecoration: 'none', transition: 'color 0.15s ease' }}>
-            Demo
+        <div className="public-navbar-links">
+          <Link to="/services" className="nav-text-link">
+            Browse services
           </Link>
-          <Link to="/dashboard" className="nav-text-link" style={{ fontSize: '0.875rem', fontWeight: '500', color: '#6B7280', textDecoration: 'none', transition: 'color 0.15s ease' }}>
-            Owner
+          <Link to="/businesses" className="nav-text-link">
+            Browse businesses
           </Link>
-          <Link to="/customer/login" className="nav-text-link" style={{ fontSize: '0.875rem', fontWeight: '500', color: '#6B7280', textDecoration: 'none', transition: 'color 0.15s ease' }}>
-            Customer
+          <Link to="/" className="nav-text-link">
+            How it works
           </Link>
-          <Link to="/login" className="nav-signin-link" style={{ 
-            fontSize: '0.875rem', 
-            fontWeight: '600', 
-            color: '#1F2937', 
-            textDecoration: 'none',
-            padding: '0.4rem 0.85rem',
-            borderRadius: '6px',
-            backgroundColor: '#F3F4F6',
-            transition: 'background-color 0.15s ease'
-          }}>
-            Sign in
+          <Link to="/customer/login" className="nav-text-link">
+            Customer login
+          </Link>
+          <Link to="/login" className="nav-signin-link">
+            Business owner
           </Link>
         </div>
       </div>

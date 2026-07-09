@@ -1,208 +1,347 @@
 const { mockStore } = require('../lib/mockStore');
 const { isSupabaseConfigured, supabase } = require('../lib/supabaseClient');
 
-// Helper to isolate customer data in Supabase queries
+const getUserEmail = (user) => (user?.email || '').trim().toLowerCase();
+
 const getCustomerIsolationFilter = (user) => {
-  return `customer_user_id.eq.${user.id},customer_email.eq.${user.email}`;
+  const email = getUserEmail(user);
+  return `customer_user_id.eq.${user.id},customer_email.eq.${email}`;
 };
 
-// Retrieve customer dashboard details (leads, conversations, checklist, and business contacts)
+const safeBusinessFields = 'id, name, slug, category, city, service_area';
+
+const toSafeBusiness = (business) => {
+  if (!business) return null;
+  return {
+    business_id: business.id,
+    business_name: business.name,
+    business_slug: business.slug,
+    category: business.category,
+    city: business.city,
+    service_area: business.service_area
+  };
+};
+
+const mapById = (items) => {
+  const map = new Map();
+  items.forEach((item) => {
+    if (item?.id) map.set(item.id, item);
+  });
+  return map;
+};
+
+const matchesCustomer = (record, user) => {
+  const email = getUserEmail(user);
+  return record.customer_user_id === user.id || (record.customer_email || '').toLowerCase() === email;
+};
+
+const attachMissingCustomerUserIds = async (user, leads, conversations) => {
+  const email = getUserEmail(user);
+
+  const missingLeadIds = leads
+    .filter((lead) => !lead.customer_user_id && (lead.customer_email || '').toLowerCase() === email)
+    .map((lead) => lead.id);
+
+  const missingConversationIds = conversations
+    .filter((conversation) => !conversation.customer_user_id && (conversation.customer_email || '').toLowerCase() === email)
+    .map((conversation) => conversation.id);
+
+  if (isSupabaseConfigured()) {
+    if (missingLeadIds.length > 0) {
+      await supabase
+        .from('leads')
+        .update({ customer_user_id: user.id })
+        .in('id', missingLeadIds)
+        .eq('customer_email', email);
+    }
+
+    if (missingConversationIds.length > 0) {
+      await supabase
+        .from('conversations')
+        .update({ customer_user_id: user.id })
+        .in('id', missingConversationIds)
+        .eq('customer_email', email);
+    }
+  } else {
+    mockStore.leads.forEach((lead) => {
+      if (missingLeadIds.includes(lead.id)) lead.customer_user_id = user.id;
+    });
+    mockStore.conversations.forEach((conversation) => {
+      if (missingConversationIds.includes(conversation.id)) conversation.customer_user_id = user.id;
+    });
+  }
+
+  leads.forEach((lead) => {
+    if (missingLeadIds.includes(lead.id)) lead.customer_user_id = user.id;
+  });
+  conversations.forEach((conversation) => {
+    if (missingConversationIds.includes(conversation.id)) conversation.customer_user_id = user.id;
+  });
+};
+
+const getBusinessMapForRecords = async (records) => {
+  const ids = [...new Set(records.map((record) => record.business_id).filter(Boolean))];
+  if (ids.length === 0) return new Map();
+
+  if (isSupabaseConfigured()) {
+    const { data, error } = await supabase
+      .from('businesses')
+      .select(safeBusinessFields)
+      .in('id', ids);
+    if (error) throw error;
+    return mapById(data || []);
+  }
+
+  return mapById(mockStore.businesses.filter((business) => ids.includes(business.id)));
+};
+
+const getLastMessageMap = async (conversationIds) => {
+  const ids = [...new Set(conversationIds.filter(Boolean))];
+  if (ids.length === 0) return new Map();
+
+  if (isSupabaseConfigured()) {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('id, conversation_id, sender, content, created_at')
+      .in('conversation_id', ids)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+
+    const map = new Map();
+    (data || []).forEach((message) => {
+      if (!map.has(message.conversation_id)) {
+        map.set(message.conversation_id, message);
+      }
+    });
+    return map;
+  }
+
+  const map = new Map();
+  mockStore.messages
+    .filter((message) => ids.includes(message.conversation_id))
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .forEach((message) => {
+      if (!map.has(message.conversation_id)) {
+        map.set(message.conversation_id, message);
+      }
+    });
+  return map;
+};
+
+const enrichLead = (lead, businessMap) => {
+  const business = businessMap.get(lead.business_id);
+  return {
+    ...lead,
+    ...toSafeBusiness(business),
+    last_updated: lead.updated_at || lead.created_at
+  };
+};
+
+const enrichConversation = (conversation, businessMap, leadByConversationId, lastMessageMap) => {
+  const business = businessMap.get(conversation.business_id);
+  const lead = leadByConversationId.get(conversation.id);
+  const lastMessage = lastMessageMap.get(conversation.id);
+  return {
+    id: conversation.id,
+    business_id: conversation.business_id,
+    customer_name: conversation.customer_name,
+    customer_email: conversation.customer_email,
+    customer_phone: conversation.customer_phone,
+    customer_user_id: conversation.customer_user_id,
+    status: conversation.status,
+    needs_human_review: conversation.needs_human_review,
+    created_at: conversation.created_at,
+    updated_at: conversation.updated_at,
+    service_type: lead?.service_type || conversation.service_type || null,
+    lead_id: lead?.id || null,
+    last_message_preview: lastMessage?.content || null,
+    last_message_at: lastMessage?.created_at || conversation.updated_at || conversation.created_at,
+    ...toSafeBusiness(business)
+  };
+};
+
+const loadCustomerRecords = async (user) => {
+  if (!user?.id || !user?.email) {
+    const err = new Error('Unauthorized: Customer session missing');
+    err.status = 401;
+    throw err;
+  }
+
+  let leads = [];
+  let conversations = [];
+
+  if (isSupabaseConfigured()) {
+    const { data: leadData, error: leadErr } = await supabase
+      .from('leads')
+      .select('*')
+      .or(getCustomerIsolationFilter(user))
+      .order('created_at', { ascending: false });
+    if (leadErr) throw leadErr;
+
+    const { data: conversationData, error: conversationErr } = await supabase
+      .from('conversations')
+      .select('*')
+      .or(getCustomerIsolationFilter(user))
+      .order('created_at', { ascending: false });
+    if (conversationErr) throw conversationErr;
+
+    leads = leadData || [];
+    conversations = conversationData || [];
+  } else {
+    leads = mockStore.leads
+      .filter((lead) => matchesCustomer(lead, user))
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    conversations = mockStore.conversations
+      .filter((conversation) => matchesCustomer(conversation, user))
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  }
+
+  await attachMissingCustomerUserIds(user, leads, conversations);
+
+  const businessMap = await getBusinessMapForRecords([...leads, ...conversations]);
+  const leadByConversationId = new Map();
+  leads.forEach((lead) => {
+    if (lead.conversation_id && !leadByConversationId.has(lead.conversation_id)) {
+      leadByConversationId.set(lead.conversation_id, lead);
+    }
+  });
+  const lastMessageMap = await getLastMessageMap(conversations.map((conversation) => conversation.id));
+
+  const enrichedLeads = leads.map((lead) => enrichLead(lead, businessMap));
+  const enrichedConversations = conversations.map((conversation) =>
+    enrichConversation(conversation, businessMap, leadByConversationId, lastMessageMap)
+  );
+
+  const businesses = [...businessMap.values()].map((business) => toSafeBusiness(business));
+
+  return {
+    leads: enrichedLeads,
+    conversations: enrichedConversations,
+    businesses
+  };
+};
+
 exports.getCustomerDashboard = async (req, res) => {
   try {
-    const user = req.user; // populated by authMiddleware
-
-    if (isSupabaseConfigured()) {
-      // 1. Fetch customer's conversations
-      const { data: conversations, error: convErr } = await supabase
-        .from('conversations')
-        .select('*')
-        .or(getCustomerIsolationFilter(user));
-
-      if (convErr) throw convErr;
-
-      // 2. Fetch customer's leads
-      const { data: leads, error: leadErr } = await supabase
-        .from('leads')
-        .select('*')
-        .or(getCustomerIsolationFilter(user));
-
-      if (leadErr) throw leadErr;
-
-      // 3. Fetch first contacted business contact profile
-      let business = null;
-      if (leads.length > 0) {
-        const { data: busData, error: busErr } = await supabase
-          .from('businesses')
-          .select('*')
-          .eq('id', leads[0].business_id);
-        if (!busErr && busData && busData.length > 0) {
-          business = busData[0];
-        }
-      }
-      if (!business) {
-        // Seed default fallback business profile
-        const { data: busData } = await supabase.from('businesses').select('*').limit(1);
-        if (busData && busData.length > 0) {
-          business = busData[0];
-        }
-      }
-
-      // Attach customer_user_id to conversations/leads that match email but don't have user_id set yet
-      const missingUserIdConvs = conversations.filter(c => !c.customer_user_id && c.customer_email === user.email);
-      for (const conv of missingUserIdConvs) {
-        await supabase
-          .from('conversations')
-          .update({ customer_user_id: user.id })
-          .eq('id', conv.id);
-      }
-
-      const missingUserIdLeads = leads.filter(l => !l.customer_user_id && l.customer_email === user.email);
-      for (const lead of missingUserIdLeads) {
-        await supabase
-          .from('leads')
-          .update({ customer_user_id: user.id })
-          .eq('id', lead.id);
-      }
-
-      return res.json({
-        leads,
-        conversations,
-        business,
-        user: { id: user.id, email: user.email }
-      });
-    }
-
-    // Fallback to Mock Store
-    const conversations = mockStore.conversations.filter(
-      c => c.customer_user_id === user.id || (c.customer_email && c.customer_email.toLowerCase() === user.email.toLowerCase())
-    );
-
-    const leads = mockStore.leads.filter(
-      l => l.customer_user_id === user.id || (l.customer_email && l.customer_email.toLowerCase() === user.email.toLowerCase())
-    );
-
-    const business = mockStore.businesses[0] || null;
-
-    res.json({
-      leads,
-      conversations,
-      business,
-      user: { id: user.id, email: user.email }
+    const records = await loadCustomerRecords(req.user);
+    return res.json({
+      ...records,
+      user: { id: req.user.id, email: req.user.email }
     });
   } catch (err) {
-    console.error('❌ getCustomerDashboard error:', err.message);
-    res.status(500).json({ error: err.message });
+    console.error('getCustomerDashboard error:', err.message);
+    return res.status(err.status || 500).json({ error: err.message });
   }
 };
 
-// Retrieve conversations lists for a customer
 exports.getCustomerConversations = async (req, res) => {
   try {
-    const user = req.user;
-
-    if (isSupabaseConfigured()) {
-      const { data, error } = await supabase
-        .from('conversations')
-        .select('*')
-        .or(getCustomerIsolationFilter(user));
-      if (error) throw error;
-      return res.json(data);
-    }
-
-    const conversations = mockStore.conversations.filter(
-      c => c.customer_user_id === user.id || (c.customer_email && c.customer_email.toLowerCase() === user.email.toLowerCase())
-    );
-    res.json(conversations);
+    const records = await loadCustomerRecords(req.user);
+    return res.json(records.conversations);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(err.status || 500).json({ error: err.message });
   }
 };
 
-// Retrieve a single conversation detail with transcripts
 exports.getCustomerConversationDetail = async (req, res) => {
   try {
     const user = req.user;
     const { id } = req.params;
+    let conversation = null;
+    let messages = [];
+    let lead = null;
 
     if (isSupabaseConfigured()) {
-      // Fetch conversation first to verify ownership
-      const { data: conv, error: convErr } = await supabase
+      const { data: conversations, error: convErr } = await supabase
         .from('conversations')
         .select('*')
-        .eq('id', id)
-        .single();
+        .eq('id', id);
+      if (convErr) throw convErr;
+      conversation = conversations && conversations.length > 0 ? conversations[0] : null;
 
-      if (convErr || !conv) {
+      if (!conversation) {
         return res.status(404).json({ error: 'Conversation not found' });
       }
 
-      // Check isolation
-      if (conv.customer_user_id !== user.id && conv.customer_email !== user.email) {
+      if (!matchesCustomer(conversation, user)) {
         return res.status(403).json({ error: 'Forbidden: You do not own this conversation' });
       }
 
-      // Fetch messages
-      const { data: messages, error: msgErr } = await supabase
+      if (!conversation.customer_user_id && (conversation.customer_email || '').toLowerCase() === getUserEmail(user)) {
+        await supabase
+          .from('conversations')
+          .update({ customer_user_id: user.id })
+          .eq('id', conversation.id)
+          .eq('customer_email', getUserEmail(user));
+        conversation.customer_user_id = user.id;
+      }
+
+      const { data: messageData, error: msgErr } = await supabase
         .from('messages')
-        .select('*')
+        .select('id, conversation_id, sender, content, created_at')
         .eq('conversation_id', id)
         .order('created_at', { ascending: true });
-
       if (msgErr) throw msgErr;
+      messages = messageData || [];
 
-      return res.json({
-        ...conv,
-        messages
-      });
-    }
-
-    // Mock mode
-    const conv = mockStore.conversations.find(c => c.id === id);
-    if (!conv) {
-      return res.status(404).json({ error: 'Conversation not found (Mock)' });
-    }
-
-    if (conv.customer_user_id !== user.id && conv.customer_email?.toLowerCase() !== user.email.toLowerCase()) {
-      return res.status(403).json({ error: 'Forbidden: Access denied (Mock)' });
-    }
-
-    const messages = mockStore.messages
-      .filter(m => m.conversation_id === id)
-      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-
-    res.json({
-      ...conv,
-      messages
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-// Retrieve customer bookings list
-exports.getCustomerBookings = async (req, res) => {
-  try {
-    const user = req.user;
-
-    if (isSupabaseConfigured()) {
-      const { data, error } = await supabase
+      const { data: leadData, error: leadErr } = await supabase
         .from('leads')
         .select('*')
+        .eq('conversation_id', id)
         .or(getCustomerIsolationFilter(user));
-      if (error) throw error;
-      return res.json(data);
+      if (leadErr) throw leadErr;
+      lead = leadData && leadData.length > 0 ? leadData[0] : null;
+    } else {
+      conversation = mockStore.conversations.find((item) => item.id === id) || null;
+      if (!conversation) {
+        return res.status(404).json({ error: 'Conversation not found (Mock)' });
+      }
+      if (!matchesCustomer(conversation, user)) {
+        return res.status(403).json({ error: 'Forbidden: Access denied (Mock)' });
+      }
+      if (!conversation.customer_user_id && (conversation.customer_email || '').toLowerCase() === getUserEmail(user)) {
+        conversation.customer_user_id = user.id;
+      }
+      messages = mockStore.messages
+        .filter((message) => message.conversation_id === id)
+        .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+      lead = mockStore.leads.find((item) => item.conversation_id === id && matchesCustomer(item, user)) || null;
     }
 
-    const leads = mockStore.leads.filter(
-      l => l.customer_user_id === user.id || (l.customer_email && l.customer_email.toLowerCase() === user.email.toLowerCase())
-    );
-    res.json(leads);
+    const businessMap = await getBusinessMapForRecords([conversation]);
+    const business = businessMap.get(conversation.business_id);
+
+    return res.json({
+      id: conversation.id,
+      business_id: conversation.business_id,
+      customer_name: conversation.customer_name,
+      customer_email: conversation.customer_email,
+      customer_phone: conversation.customer_phone,
+      customer_user_id: conversation.customer_user_id,
+      status: conversation.status,
+      needs_human_review: conversation.needs_human_review,
+      created_at: conversation.created_at,
+      updated_at: conversation.updated_at,
+      service_type: lead?.service_type || null,
+      lead_id: lead?.id || null,
+      lead: lead ? enrichLead(lead, businessMap) : null,
+      messages,
+      ...toSafeBusiness(business)
+    });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(err.status || 500).json({ error: err.message });
   }
 };
 
-// Request booking updates or reschedules
+exports.getCustomerBookings = async (req, res) => {
+  try {
+    const records = await loadCustomerRecords(req.user);
+    return res.json(records.leads);
+  } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message });
+  }
+};
+
 exports.requestUpdateOrReschedule = async (req, res) => {
   try {
     const user = req.user;
@@ -212,144 +351,219 @@ exports.requestUpdateOrReschedule = async (req, res) => {
       return res.status(400).json({ error: 'leadId and notes are required' });
     }
 
+    let updatedLead = null;
+
     if (isSupabaseConfigured()) {
-      // 1. Verify lead ownership
-      const { data: lead, error: leadErr } = await supabase
+      const { data: leads, error: leadErr } = await supabase
         .from('leads')
         .select('*')
-        .eq('id', leadId)
-        .single();
+        .eq('id', leadId);
+      if (leadErr) throw leadErr;
 
-      if (leadErr || !lead) {
-        return res.status(404).json({ error: 'Lead booking not found' });
+      const lead = leads && leads.length > 0 ? leads[0] : null;
+      if (!lead) return res.status(404).json({ error: 'Lead booking not found' });
+      if (!matchesCustomer(lead, user)) return res.status(403).json({ error: 'Forbidden: Access denied' });
+
+      const newNotes = `${lead.notes || ''}\n[Customer Update Request]: ${notes}`.trim();
+      const updatePayload = {
+        notes: newNotes
+      };
+      if (!lead.customer_user_id && (lead.customer_email || '').toLowerCase() === getUserEmail(user)) {
+        updatePayload.customer_user_id = user.id;
       }
 
-      if (lead.customer_user_id !== user.id && lead.customer_email !== user.email) {
-        return res.status(403).json({ error: 'Forbidden: Access denied' });
-      }
-
-      // 2. Append reschedule request alert to lead notes
-      const newNotes = `${lead.notes || ''}\n[Customer Reschedule Request]: ${notes}`.trim();
-      const { data: updatedLead, error: updateErr } = await supabase
+      const { data: leadData, error: updateErr } = await supabase
         .from('leads')
-        .update({ notes: newNotes })
+        .update(updatePayload)
         .eq('id', leadId)
-        .select()
-        .single();
-
+        .select();
       if (updateErr) throw updateErr;
+      updatedLead = leadData && leadData.length > 0 ? leadData[0] : null;
 
-      // 3. Flag conversation for owner attention
       if (lead.conversation_id) {
         await supabase
           .from('conversations')
           .update({ needs_human_review: true })
           .eq('id', lead.conversation_id);
       }
+    } else {
+      const index = mockStore.leads.findIndex((lead) => lead.id === leadId);
+      if (index === -1) return res.status(404).json({ error: 'Lead booking not found (Mock)' });
 
-      return res.json(updatedLead);
-    }
+      const lead = mockStore.leads[index];
+      if (!matchesCustomer(lead, user)) return res.status(403).json({ error: 'Forbidden: Access denied (Mock)' });
 
-    // Mock Mode
-    const index = mockStore.leads.findIndex(l => l.id === leadId);
-    if (index === -1) {
-      return res.status(404).json({ error: 'Lead booking not found (Mock)' });
-    }
-
-    const lead = mockStore.leads[index];
-    if (lead.customer_user_id !== user.id && lead.customer_email?.toLowerCase() !== user.email.toLowerCase()) {
-      return res.status(403).json({ error: 'Forbidden: Access denied (Mock)' });
-    }
-
-    mockStore.leads[index].notes = `${lead.notes || ''}\n[Customer Reschedule Request]: ${notes}`.trim();
-
-    // Flag mock conversation
-    if (lead.conversation_id) {
-      const convIndex = mockStore.conversations.findIndex(c => c.id === lead.conversation_id);
-      if (convIndex !== -1) {
-        mockStore.conversations[convIndex].needs_human_review = true;
+      mockStore.leads[index].notes = `${lead.notes || ''}\n[Customer Update Request]: ${notes}`.trim();
+      if (!mockStore.leads[index].customer_user_id && (mockStore.leads[index].customer_email || '').toLowerCase() === getUserEmail(user)) {
+        mockStore.leads[index].customer_user_id = user.id;
       }
+
+      if (lead.conversation_id) {
+        const convIndex = mockStore.conversations.findIndex((conversation) => conversation.id === lead.conversation_id);
+        if (convIndex !== -1) {
+          mockStore.conversations[convIndex].needs_human_review = true;
+        }
+      }
+      updatedLead = mockStore.leads[index];
     }
 
-    res.json(mockStore.leads[index]);
+    const businessMap = await getBusinessMapForRecords(updatedLead ? [updatedLead] : []);
+    return res.json(updatedLead ? enrichLead(updatedLead, businessMap) : { success: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(err.status || 500).json({ error: err.message });
   }
 };
 
-// Update profile fields (email is read-only)
 exports.updateCustomerProfile = async (req, res) => {
   try {
     const user = req.user;
     const { customer_name, customer_phone, address } = req.body;
 
     if (isSupabaseConfigured()) {
-      // Update all leads matching customer_user_id or customer_email
-      const { data, error } = await supabase
+      const { error: leadErr } = await supabase
         .from('leads')
-        .update({
-          customer_name,
-          customer_phone,
-          address
-        })
+        .update({ customer_name, customer_phone, address })
         .or(getCustomerIsolationFilter(user));
+      if (leadErr) throw leadErr;
 
-      if (error) throw error;
-
-      // Also update conversations name/phone
-      await supabase
+      const { error: convErr } = await supabase
         .from('conversations')
-        .update({
-          customer_name,
-          customer_phone
-        })
+        .update({ customer_name, customer_phone })
         .or(getCustomerIsolationFilter(user));
+      if (convErr) throw convErr;
 
       return res.json({ success: true, customer_name, customer_phone, address });
     }
 
-    // Mock mode
     mockStore.leads.forEach((lead, index) => {
-      if (lead.customer_user_id === user.id || lead.customer_email?.toLowerCase() === user.email.toLowerCase()) {
+      if (matchesCustomer(lead, user)) {
         mockStore.leads[index].customer_name = customer_name;
         mockStore.leads[index].customer_phone = customer_phone;
         mockStore.leads[index].address = address;
       }
     });
 
-    mockStore.conversations.forEach((conv, index) => {
-      if (conv.customer_user_id === user.id || conv.customer_email?.toLowerCase() === user.email.toLowerCase()) {
+    mockStore.conversations.forEach((conversation, index) => {
+      if (matchesCustomer(conversation, user)) {
         mockStore.conversations[index].customer_name = customer_name;
         mockStore.conversations[index].customer_phone = customer_phone;
       }
     });
 
-    res.json({ success: true, customer_name, customer_phone, address });
+    return res.json({ success: true, customer_name, customer_phone, address });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(err.status || 500).json({ error: err.message });
   }
 };
 
-// Public endpoint: Submit a new cleaning enquiry/booking request (no auth required)
-// Optionally resolves JWT if Authorization header is present.
+const sanitizeString = (str, maxLen = 500) =>
+  typeof str === 'string' ? str.trim().substring(0, maxLen) : null;
+
+const normalizeSlug = (slug) =>
+  sanitizeString(slug, 120)?.toLowerCase().replace(/[^a-z0-9-]/g, '') || null;
+
+const normalizeServiceSlug = (value) =>
+  typeof value === 'string'
+    ? value
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+    : null;
+
+const resolveBusinessForPublicEnquiry = async ({ businessId, businessSlug, allowDemoFallback }) => {
+  const cleanBusinessId = sanitizeString(businessId, 80);
+  const cleanBusinessSlug = normalizeSlug(businessSlug) || (allowDemoFallback ? 'sparklehome-cleaning' : null);
+
+  if (!cleanBusinessId && !cleanBusinessSlug) {
+    return {
+      status: 400,
+      error: 'business_id or business_slug is required.'
+    };
+  }
+
+  if (isSupabaseConfigured()) {
+    let query = supabase
+      .from('businesses')
+      .select('id, name, slug, is_public');
+
+    query = cleanBusinessId
+      ? query.eq('id', cleanBusinessId)
+      : query.eq('slug', cleanBusinessSlug);
+
+    const { data, error } = await query.limit(1);
+    if (error) throw error;
+
+    const business = data && data.length > 0 ? data[0] : null;
+    if (!business) {
+      return { status: 404, error: 'Business not found.' };
+    }
+    if (business.is_public !== true) {
+      return { status: 403, error: 'Business is not accepting public enquiries.' };
+    }
+
+    return { business };
+  }
+
+  const business = mockStore.businesses.find((item) => (
+    cleanBusinessId ? item.id === cleanBusinessId : item.slug === cleanBusinessSlug
+  ));
+
+  if (!business) {
+    return { status: 404, error: 'Business not found (Mock).' };
+  }
+  if (business.is_public !== true) {
+    return { status: 403, error: 'Business is not accepting public enquiries (Mock).' };
+  }
+
+  return { business };
+};
+
+const resolveOptionalCustomerUser = async (req) => {
+  const authHeader = req.headers?.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null;
+  }
+
+  const token = authHeader.replace('Bearer ', '').trim();
+  if (!token) return null;
+
+  if (isSupabaseConfigured()) {
+    if (token === 'mock-token') return null;
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (error || !user) return null;
+    return user;
+  }
+
+  if (token === 'mock-customer-token') {
+    const rawEmail = typeof req.headers['x-customer-email'] === 'string'
+      ? req.headers['x-customer-email']
+      : 'sarah@jenkins.com';
+    const email = rawEmail.trim().toLowerCase() || 'sarah@jenkins.com';
+    const id = `mock-customer-${email.replace(/[^a-z0-9]/g, '-')}`;
+    return { id, email };
+  }
+
+  return null;
+};
+
 exports.createEnquiry = async (req, res) => {
   try {
-    const DEMO_BUSINESS_ID = 'd3b07384-d113-4ec5-a5d6-c6e7f8d9a101';
-
-    // --- Input Validation ---
     const {
+      business_id,
+      business_slug,
+      service_id,
+      service_slug,
       service_type,
       customer_name,
       customer_email,
       customer_phone,
       address,
       preferred_date,
-      notes
+      notes,
+      demo_fallback
     } = req.body;
 
-    if (!service_type || typeof service_type !== 'string') {
-      return res.status(400).json({ error: 'service_type is required.' });
-    }
     if (!customer_name || typeof customer_name !== 'string') {
       return res.status(400).json({ error: 'customer_name is required.' });
     }
@@ -360,41 +574,89 @@ exports.createEnquiry = async (req, res) => {
       return res.status(400).json({ error: 'address is required.' });
     }
 
-    // --- Sanitize ---
-    const sanitize = (str, maxLen = 500) =>
-      typeof str === 'string' ? str.trim().substring(0, maxLen) : null;
+    const businessResult = await resolveBusinessForPublicEnquiry({
+      businessId: business_id,
+      businessSlug: business_slug,
+      allowDemoFallback: demo_fallback === true
+    });
 
-    const cleanServiceType   = sanitize(service_type, 100);
-    const cleanName          = sanitize(customer_name, 150);
-    const cleanEmail         = sanitize(customer_email, 200).toLowerCase();
-    const cleanPhone         = sanitize(customer_phone, 30);
-    const cleanAddress       = sanitize(address, 300);
-    const cleanPreferredDate = sanitize(preferred_date, 100);
-    const cleanNotes         = sanitize(notes, 1000);
+    if (!businessResult.business) {
+      return res.status(businessResult.status).json({ error: businessResult.error });
+    }
 
-    // --- Optionally resolve authenticated user from JWT header ---
-    let customer_user_id = null;
-    const authHeader = req.headers?.authorization;
-    if (authHeader && authHeader.startsWith('Bearer ') && isSupabaseConfigured()) {
-      const token = authHeader.replace('Bearer ', '').trim();
-      if (token && token !== 'mock-token') {
-        const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
-        if (!authErr && user) {
-          customer_user_id = user.id;
+    const targetBusiness = businessResult.business;
+
+    // Validate service gig if provided
+    let resolvedService = null;
+    const cleanServiceId = sanitizeString(service_id, 80);
+    const cleanServiceSlug = normalizeServiceSlug(service_slug);
+
+    if (cleanServiceId || cleanServiceSlug) {
+      if (isSupabaseConfigured()) {
+        let sQuery = supabase
+          .from('services')
+          .select('*')
+          .eq('business_id', targetBusiness.id);
+
+        if (cleanServiceId) {
+          sQuery = sQuery.eq('id', cleanServiceId);
+        } else {
+          sQuery = sQuery.eq('slug', cleanServiceSlug);
         }
+
+        const { data: sData, error: sErr } = await sQuery.limit(1);
+        if (sErr) throw sErr;
+        resolvedService = sData && sData.length > 0 ? sData[0] : null;
+      } else {
+        resolvedService = mockStore.services.find(s =>
+          s.business_id === targetBusiness.id &&
+          (cleanServiceId ? s.id === cleanServiceId : s.slug === cleanServiceSlug)
+        );
+      }
+
+      if (!resolvedService) {
+        return res.status(404).json({ error: 'Selected service gig was not found for this business.' });
+      }
+
+      if (resolvedService.is_public === false) {
+        return res.status(403).json({ error: 'This service gig is not publicly available.' });
       }
     }
 
-    const firstMessage = `New ${cleanServiceType} request from ${cleanName} at ${cleanAddress}${cleanPreferredDate ? ` on ${cleanPreferredDate}` : ''}.${cleanNotes ? ` Notes: ${cleanNotes}` : ''}`;
+    const cleanServiceType = resolvedService ? resolvedService.name : sanitizeString(service_type, 100);
+    const finalServiceId = resolvedService ? resolvedService.id : null;
+
+    if (!cleanServiceType) {
+      return res.status(400).json({ error: 'service_type or a valid service gig is required.' });
+    }
+
+    const cleanName = sanitizeString(customer_name, 150);
+    const cleanEmail = sanitizeString(customer_email, 200).toLowerCase();
+    let finalCustomerEmail = cleanEmail;
+    const cleanPhone = sanitizeString(customer_phone, 30);
+    const cleanAddress = sanitizeString(address, 300);
+    const cleanPreferredDate = sanitizeString(preferred_date, 100);
+    const cleanNotes = sanitizeString(notes, 1000);
+
+    let customer_user_id = null;
+    const authUser = await resolveOptionalCustomerUser(req);
+    if (authUser) {
+      customer_user_id = authUser.id;
+      if (authUser.email) {
+        finalCustomerEmail = sanitizeString(authUser.email, 200).toLowerCase();
+      }
+    }
+
+    const firstMessage = `New ${cleanServiceType} request for ${targetBusiness.name} from ${cleanName} at ${cleanAddress}${cleanPreferredDate ? ` on ${cleanPreferredDate}` : ''}.${cleanNotes ? ` Notes: ${cleanNotes}` : ''}`;
 
     if (isSupabaseConfigured()) {
-      // 1. Create conversation
       const { data: conv, error: convErr } = await supabase
         .from('conversations')
         .insert({
-          business_id: DEMO_BUSINESS_ID,
+          business_id: targetBusiness.id,
+          service_id: finalServiceId,
           customer_name: cleanName,
-          customer_email: cleanEmail,
+          customer_email: finalCustomerEmail,
           customer_phone: cleanPhone,
           customer_user_id,
           status: 'open',
@@ -406,21 +668,20 @@ exports.createEnquiry = async (req, res) => {
 
       if (convErr) throw convErr;
 
-      // 2. Create first message
       await supabase.from('messages').insert({
         conversation_id: conv.id,
         sender: 'customer',
         content: firstMessage
       });
 
-      // 3. Create lead
       const { data: lead, error: leadErr } = await supabase
         .from('leads')
         .insert({
-          business_id: DEMO_BUSINESS_ID,
+          business_id: targetBusiness.id,
           conversation_id: conv.id,
+          service_id: finalServiceId,
           customer_name: cleanName,
-          customer_email: cleanEmail,
+          customer_email: finalCustomerEmail,
           customer_phone: cleanPhone,
           customer_user_id,
           address: cleanAddress,
@@ -434,24 +695,40 @@ exports.createEnquiry = async (req, res) => {
 
       if (leadErr) throw leadErr;
 
+      console.log('⚡ [DEV TRACE] createEnquiry:', JSON.stringify({
+        received_business_slug: business_slug || null,
+        received_business_id: business_id || null,
+        received_service_id: service_id || null,
+        received_service_slug: service_slug || null,
+        received_service_type: service_type || null,
+        resolved_business_id: targetBusiness.id,
+        resolved_service_id: finalServiceId,
+        created_lead_id: lead.id,
+        created_lead_business_id: lead.business_id,
+        created_lead_service_id: lead.service_id
+      }, null, 2));
+
       return res.status(201).json({
         success: true,
         lead_id: lead.id,
         conversation_id: conv.id,
-        customer_email: cleanEmail,
+        business_id: targetBusiness.id,
+        business_slug: targetBusiness.slug,
+        business_name: targetBusiness.name,
+        customer_email: finalCustomerEmail,
         authenticated: !!customer_user_id
       });
     }
 
-    // --- Mock Store Mode ---
     const newConvId = `c-pub-${Date.now()}`;
     const newLeadId = `l-pub-${Date.now()}`;
 
     const newConversation = {
       id: newConvId,
-      business_id: DEMO_BUSINESS_ID,
+      business_id: targetBusiness.id,
+      service_id: finalServiceId,
       customer_name: cleanName,
-      customer_email: cleanEmail,
+      customer_email: finalCustomerEmail,
       customer_phone: cleanPhone,
       customer_user_id,
       status: 'open',
@@ -470,10 +747,11 @@ exports.createEnquiry = async (req, res) => {
 
     const newLead = {
       id: newLeadId,
-      business_id: DEMO_BUSINESS_ID,
+      business_id: targetBusiness.id,
       conversation_id: newConvId,
+      service_id: finalServiceId,
       customer_name: cleanName,
-      customer_email: cleanEmail,
+      customer_email: finalCustomerEmail,
       customer_phone: cleanPhone,
       customer_user_id,
       address: cleanAddress,
@@ -488,15 +766,31 @@ exports.createEnquiry = async (req, res) => {
     mockStore.messages.push(newMessage);
     mockStore.leads.push(newLead);
 
+    console.log('⚡ [DEV TRACE] createEnquiry (Mock):', JSON.stringify({
+      received_business_slug: business_slug || null,
+      received_business_id: business_id || null,
+      received_service_id: service_id || null,
+      received_service_slug: service_slug || null,
+      received_service_type: service_type || null,
+      resolved_business_id: targetBusiness.id,
+      resolved_service_id: finalServiceId,
+      created_lead_id: newLeadId,
+      created_lead_business_id: newLead.business_id,
+      created_lead_service_id: newLead.service_id
+    }, null, 2));
+
     return res.status(201).json({
       success: true,
       lead_id: newLeadId,
       conversation_id: newConvId,
-      customer_email: cleanEmail,
+      business_id: targetBusiness.id,
+      business_slug: targetBusiness.slug,
+      business_name: targetBusiness.name,
+      customer_email: finalCustomerEmail,
       authenticated: !!customer_user_id
     });
   } catch (err) {
-    console.error('❌ createEnquiry error:', err.message);
-    res.status(500).json({ error: err.message });
+    console.error('createEnquiry error:', err.message);
+    return res.status(500).json({ error: err.message });
   }
 };

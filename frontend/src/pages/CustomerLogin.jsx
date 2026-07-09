@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../supabaseClient';
 import Logo from '../components/Logo';
@@ -13,6 +13,12 @@ const CustomerLogin = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const emailParam = searchParams.get('email');
+    if (emailParam) setEmail(emailParam);
+  }, [searchParams]);
 
   const handleCustomerAuth = async (e) => {
     e.preventDefault();
@@ -94,24 +100,24 @@ const CustomerLogin = () => {
         <div className="auth-product-preview-container" style={{ margin: 'auto 0' }}>
           <div className="auth-preview-card mini-inbox-card" style={{ transform: 'none', marginBottom: '1rem' }}>
             <span style={{ fontSize: '0.7rem', color: '#6B7280', fontWeight: 'bold' }}>Step 1</span>
-            <h4 style={{ margin: '0.2rem 0', color: '#0A0A0A' }}>Chat with AI Assistant</h4>
-            <p className="preview-card-body" style={{ margin: '0.2rem 0' }}>Enquire about services, pricing, and availability online.</p>
+            <h4 style={{ margin: '0.2rem 0', color: '#0A0A0A' }}>Submit service requests</h4>
+            <p className="preview-card-body" style={{ margin: '0.2rem 0' }}>Choose a business, select a service, and send an enquiry online.</p>
           </div>
           <div className="auth-preview-card lead-checklist-card" style={{ transform: 'none', marginBottom: '1rem' }}>
             <span style={{ fontSize: '0.7rem', color: '#2563EB', fontWeight: 'bold' }}>Step 2</span>
-            <h4 style={{ margin: '0.2rem 0', color: '#0A0A0A' }}>Open Booking Portal</h4>
-            <p className="preview-card-body" style={{ margin: '0.2rem 0' }}>Provide missing address details and view chat history in your personal dashboard.</p>
+            <h4 style={{ margin: '0.2rem 0', color: '#0A0A0A' }}>Track every business</h4>
+            <p className="preview-card-body" style={{ margin: '0.2rem 0' }}>See requests, bookings, and conversations grouped by service provider.</p>
           </div>
           <div className="auth-preview-card booking-outcome-card" style={{ transform: 'none' }}>
             <span style={{ fontSize: '0.7rem', color: '#16A34A', fontWeight: 'bold' }}>Step 3</span>
-            <h4 style={{ margin: '0.2rem 0', color: '#0A0A0A' }}>Confirm Schedule</h4>
-            <p className="preview-card-body" style={{ margin: '0.2rem 0' }}>Your job is locked in. Request changes or reschedule anytime.</p>
+            <h4 style={{ margin: '0.2rem 0', color: '#0A0A0A' }}>Keep your trail</h4>
+            <p className="preview-card-body" style={{ margin: '0.2rem 0' }}>Use the same email from your enquiry to pull requests into this portal.</p>
           </div>
         </div>
 
         <div className="auth-welcome-message" style={{ marginTop: '2rem' }}>
-          <h2>View your booking requests in one place.</h2>
-          <p>Access your conversations, submit missing details, and track cleaner status.</p>
+          <h2>View marketplace requests in one place.</h2>
+          <p>Access your enquiries, conversations, and booking updates across CleanDesk businesses.</p>
         </div>
       </motion.section>
 
@@ -132,7 +138,7 @@ const CustomerLogin = () => {
             <p style={{ fontSize: '0.8rem', color: '#6B7280' }}>
               {isRegistering 
                 ? 'Register to manage your quotes and schedules'
-                : 'Enter your email to verify booking and chat records'
+                : 'Use the same email from your enquiry to track marketplace records'
               }
             </p>
           </div>
@@ -207,7 +213,7 @@ const CustomerLogin = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required={!isRegistering ? true : true} /* Required for custom logins */
-                placeholder="••••••••"
+                placeholder="Password"
                 disabled={loading}
                 autoComplete={isRegistering ? 'new-password' : 'current-password'}
               />
@@ -219,7 +225,7 @@ const CustomerLogin = () => {
               disabled={loading}
               style={{ marginTop: '0.5rem', height: '42px', fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
             >
-              {loading ? 'Authenticating...' : isRegistering ? 'Register' : 'Access Bookings'}
+              {loading ? 'Authenticating...' : isRegistering ? 'Register' : 'Access requests'}
               {!loading && <ArrowRightIcon size={14} />}
             </button>
           </form>

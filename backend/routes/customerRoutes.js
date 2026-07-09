@@ -10,6 +10,7 @@ router.get('/conversations/:id', authMiddleware, customerController.getCustomerC
 router.get('/bookings', authMiddleware, customerController.getCustomerBookings);
 router.put('/profile', authMiddleware, customerController.updateCustomerProfile);
 router.put('/request-update', authMiddleware, customerController.requestUpdateOrReschedule);
+router.post('/request-update', authMiddleware, customerController.requestUpdateOrReschedule);
 
 // Public route: no auth required. Optional JWT resolution is handled inside the controller.
 router.post('/enquiries', customerController.createEnquiry);

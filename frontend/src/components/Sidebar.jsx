@@ -22,7 +22,7 @@ const Sidebar = () => {
           console.error('Error fetching user email in sidebar:', err);
         }
       } else {
-        setEmail('owner@sparklehome.co.uk');
+        setEmail('owner@cleandesk.local');
       }
     };
     fetchUser();

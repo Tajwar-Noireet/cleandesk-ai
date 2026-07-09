@@ -1572,6 +1572,865 @@ a {
   border: 1px solid #fecaca;
 }
 
+.business-setup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.business-profile-card {
+  max-width: 960px;
+  width: 100%;
+}
+
+.marketplace-listing-header-dashboard {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.listing-status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1px solid;
+}
+
+.listing-status-pill.published {
+  color: #166534;
+  background-color: #DCFCE7;
+  border-color: #BBF7D0;
+}
+
+.listing-status-pill.draft {
+  color: #92400E;
+  background-color: #FEF3C7;
+  border-color: #FDE68A;
+}
+
+.publish-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: #111827;
+  cursor: pointer;
+  user-select: none;
+}
+
+.publish-toggle input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.publish-toggle-track {
+  position: relative;
+  display: inline-flex;
+  width: 44px;
+  height: 24px;
+  padding: 3px;
+  border-radius: 999px;
+  background-color: #D1D5DB;
+  transition: background-color 0.15s ease;
+}
+
+.publish-toggle-track span {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.18);
+  transition: transform 0.15s ease;
+}
+
+.publish-toggle input:checked + .publish-toggle-track {
+  background-color: #16A34A;
+}
+
+.publish-toggle input:checked + .publish-toggle-track span {
+  transform: translateX(20px);
+}
+
+.publish-toggle strong {
+  font-size: 0.85rem;
+}
+
+.listing-warning {
+  background-color: #FFFBEB;
+  border: 1px solid #FDE68A;
+  color: #92400E;
+  border-radius: 8px;
+  padding: 0.9rem 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.listing-warning strong {
+  display: block;
+  color: #78350F;
+  font-size: 0.85rem;
+  margin-bottom: 0.45rem;
+}
+
+.listing-warning ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.listing-warning li {
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.slug-input-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.form-help-text {
+  color: #6B7280;
+  font-size: 0.78rem;
+  margin: 0;
+}
+
+.listing-preview-box {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  align-items: center;
+  background-color: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.listing-preview-box div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.listing-preview-box span {
+  color: #6B7280;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.listing-preview-box a,
+.listing-preview-box strong {
+  color: #111827;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.listing-preview-box a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.listing-preview-box p {
+  max-width: 360px;
+  margin: 0;
+  color: #6B7280;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.business-form-actions {
+  max-width: 960px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.embed-code-box {
+  background-color: #0F172A;
+  border-radius: 8px;
+  padding: 1.25rem;
+  overflow: hidden;
+}
+
+.embed-code-box pre {
+  margin: 0;
+  color: #CBD5E1;
+  font-size: 0.8rem;
+  overflow-x: auto;
+  text-align: left;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.service-publication-note {
+  max-width: 960px;
+  margin-bottom: 1.5rem;
+  background-color: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.service-publication-note div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.45rem;
+}
+
+.service-publication-note h3 {
+  font-size: 1rem;
+  margin: 0;
+  letter-spacing: 0;
+}
+
+.service-publication-note p {
+  margin: 0;
+  color: #6B7280;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+/* Marketplace Customer Portal */
+.customer-portal-shell {
+  min-height: 100vh;
+  background-color: #F8F8F7;
+}
+
+.customer-portal-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: #FFFFFF;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.customer-portal-header-inner {
+  width: 100%;
+  max-width: 1180px;
+  min-height: 64px;
+  margin: 0 auto;
+  padding: 0.75rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+}
+
+.customer-portal-logo {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.customer-portal-nav,
+.customer-portal-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.customer-nav-item {
+  color: #6B7280;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+  padding: 0.4rem 0.55rem;
+  border-radius: 6px;
+}
+
+.customer-nav-item.active,
+.customer-nav-item:hover {
+  color: #111827;
+  background-color: #F3F4F6;
+}
+
+.customer-browse-link {
+  color: #2563EB;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.customer-secure-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #6B7280;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.customer-logout-btn {
+  min-height: 34px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+}
+
+.customer-portal-main {
+  max-width: 1180px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2.5rem 2rem 4rem;
+}
+
+.customer-portal-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.customer-loading {
+  display: flex;
+  justify-content: center;
+  padding: 4rem 0;
+  color: #6B7280;
+  font-size: 0.9rem;
+}
+
+.customer-loading.compact {
+  padding: 2rem;
+}
+
+.customer-page-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  align-items: flex-start;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.customer-eyebrow {
+  color: #2563EB;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.customer-page-header h1 {
+  margin: 0.35rem 0 0.35rem;
+  color: #0A0A0A;
+  font-size: 2rem;
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+
+.customer-page-header p {
+  max-width: 680px;
+  margin: 0;
+  color: #6B7280;
+  line-height: 1.6;
+}
+
+.customer-empty-state {
+  background-color: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 2.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.85rem;
+  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.04);
+}
+
+.customer-empty-state.compact {
+  box-shadow: none;
+  padding: 1.25rem;
+}
+
+.customer-empty-state svg {
+  color: #9CA3AF;
+}
+
+.customer-empty-state h2 {
+  margin: 0;
+  font-size: 1.35rem;
+  letter-spacing: 0;
+}
+
+.customer-empty-state p {
+  max-width: 520px;
+  margin: 0;
+  color: #6B7280;
+  line-height: 1.55;
+}
+
+.customer-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.customer-summary-grid article {
+  background-color: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.04);
+}
+
+.customer-summary-grid span {
+  color: #6B7280;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.customer-summary-grid strong {
+  color: #111827;
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.customer-business-groups,
+.customer-request-list,
+.customer-conversation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.customer-business-group,
+.customer-booking-card,
+.customer-conversation-group,
+.customer-conversation-detail {
+  background-color: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.04);
+}
+
+.customer-business-group {
+  overflow: hidden;
+}
+
+.customer-business-group-header,
+.customer-booking-card-header,
+.customer-conversation-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  border-bottom: 1px solid #E5E7EB;
+  padding: 1.15rem;
+}
+
+.customer-business-group-header span,
+.customer-booking-card-header span,
+.customer-conversation-group-header span {
+  color: #6B7280;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.customer-business-group-header h2,
+.customer-booking-card-header h2,
+.customer-conversation-group-header h2 {
+  margin: 0.25rem 0;
+  font-size: 1.25rem;
+  letter-spacing: 0;
+}
+
+.customer-business-group-header p {
+  margin: 0;
+  color: #6B7280;
+  font-size: 0.85rem;
+}
+
+.customer-request-list {
+  padding: 1rem;
+}
+
+.customer-request-card {
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 1rem;
+  background-color: #F9FAFB;
+}
+
+.customer-request-card-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.customer-request-card h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+  letter-spacing: 0;
+}
+
+.customer-request-card p {
+  margin: 0;
+  color: #6B7280;
+  font-size: 0.85rem;
+}
+
+.customer-status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.customer-status-pill.status-new,
+.customer-status-pill.status-open {
+  background-color: #DBEAFE;
+  color: #1E40AF;
+}
+
+.customer-status-pill.status-contacted {
+  background-color: #FEF3C7;
+  color: #92400E;
+}
+
+.customer-status-pill.status-booked {
+  background-color: #DCFCE7;
+  color: #166534;
+}
+
+.customer-status-pill.status-lost {
+  background-color: #F3F4F6;
+  color: #4B5563;
+}
+
+.customer-status-tracker {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.customer-status-step {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+  color: #9CA3AF;
+}
+
+.customer-status-step span {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #E5E7EB;
+  color: #6B7280;
+  font-size: 0.72rem;
+  font-weight: 800;
+  flex: 0 0 auto;
+}
+
+.customer-status-step strong {
+  font-size: 0.75rem;
+  line-height: 1.25;
+}
+
+.customer-status-step.active {
+  color: #111827;
+}
+
+.customer-status-step.active span {
+  background-color: #2563EB;
+  color: #FFFFFF;
+}
+
+.customer-request-details,
+.customer-booking-details,
+.customer-conversation-item dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.customer-request-details div,
+.customer-booking-details div,
+.customer-conversation-item dl div {
+  min-width: 0;
+}
+
+.customer-request-details dt,
+.customer-booking-details dt,
+.customer-conversation-item dt {
+  color: #6B7280;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.customer-request-details dd,
+.customer-booking-details dd,
+.customer-conversation-item dd {
+  margin: 0.2rem 0 0;
+  color: #111827;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.customer-conversation-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  align-self: flex-start;
+  color: #2563EB;
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.customer-booking-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.customer-booking-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.customer-booking-details {
+  padding: 1rem;
+}
+
+.customer-card-actions {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0 1rem 1rem;
+  flex-wrap: wrap;
+}
+
+.customer-conversation-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.9fr) minmax(0, 1.1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.customer-conversation-group {
+  overflow: hidden;
+}
+
+.customer-conversation-item {
+  width: calc(100% - 2rem);
+  margin: 0 1rem 1rem;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  background-color: #FFFFFF;
+  padding: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.customer-conversation-item.active {
+  border-color: #2563EB;
+  background-color: #EFF6FF;
+}
+
+.customer-conversation-item strong {
+  display: block;
+  color: #111827;
+  font-size: 0.92rem;
+  margin-bottom: 0.25rem;
+}
+
+.customer-conversation-item span {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: #6B7280;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.customer-conversation-detail {
+  min-height: 560px;
+  padding: 1.25rem;
+  position: sticky;
+  top: 88px;
+}
+
+.customer-conversation-detail-header {
+  border-bottom: 1px solid #E5E7EB;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+}
+
+.customer-conversation-detail-header span {
+  color: #2563EB;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.customer-conversation-detail-header h2 {
+  margin: 0.25rem 0;
+  font-size: 1.2rem;
+  letter-spacing: 0;
+}
+
+.customer-conversation-detail-header p,
+.customer-muted-text {
+  margin: 0;
+  color: #6B7280;
+  font-size: 0.85rem;
+}
+
+.customer-message-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  max-height: 460px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.customer-message {
+  max-width: 86%;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 0.75rem;
+  background-color: #FFFFFF;
+}
+
+.customer-message.customer {
+  align-self: flex-end;
+  border-color: #BFDBFE;
+  background-color: #EFF6FF;
+}
+
+.customer-message.business {
+  align-self: flex-start;
+  background-color: #F9FAFB;
+}
+
+.customer-message span {
+  display: block;
+  color: #6B7280;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.25rem;
+}
+
+.customer-message p {
+  margin: 0;
+  color: #111827;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.customer-message time {
+  display: block;
+  margin-top: 0.45rem;
+  color: #9CA3AF;
+  font-size: 0.72rem;
+}
+
+@media (max-width: 900px) {
+  .customer-portal-header-inner {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .customer-portal-nav,
+  .customer-portal-actions {
+    flex-wrap: wrap;
+  }
+
+  .customer-summary-grid,
+  .customer-booking-grid,
+  .customer-conversation-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .customer-conversation-detail {
+    position: static;
+    min-height: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .customer-portal-header-inner,
+  .customer-portal-main {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .customer-page-header {
+    flex-direction: column;
+  }
+
+  .customer-page-header h1 {
+    font-size: 1.55rem;
+  }
+
+  .customer-request-card-top,
+  .customer-business-group-header,
+  .customer-booking-card-header,
+  .customer-conversation-group-header,
+  .customer-card-actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .customer-request-details,
+  .customer-booking-details,
+  .customer-conversation-item dl,
+  .customer-status-tracker {
+    grid-template-columns: 1fr;
+  }
+
+  .customer-card-actions .marketplace-btn {
+    width: 100%;
+  }
+
+  .customer-message {
+    max-width: 100%;
+  }
+}
+
 /* Managers Split Layout */
 .manager-layout {
   display: grid;
@@ -4602,29 +5461,29 @@ body {
     gap: 3.5rem;
     text-align: center;
   }
-  
+
   .hero-copy-left {
     align-items: center;
   }
-  
+
   .hero-headline {
     font-size: 2.75rem;
   }
-  
+
   .dribbble-mockup-container {
     max-width: 580px;
     margin: 0 auto;
   }
-  
+
   .service-business-grid {
     grid-template-columns: 1fr 1fr;
   }
-  
+
   .interactive-workflow-layout {
     grid-template-columns: 1fr;
     gap: 2.5rem;
   }
-  
+
   .workflow-live-preview-box {
     position: static;
   }
@@ -4637,12 +5496,33 @@ body {
     grid-template-columns: 1fr;
     gap: 2rem;
   }
-  
+
   .hero-cta-actions {
     flex-direction: column;
     align-items: stretch;
     width: 100%;
     max-width: 320px;
+  }
+}
+
+@media (max-width: 768px) {
+  .marketplace-listing-header-dashboard,
+  .listing-preview-box,
+  .service-publication-note {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .slug-input-row {
+    grid-template-columns: 1fr;
+  }
+
+  .business-form-actions {
+    justify-content: stretch;
+  }
+
+  .business-form-actions .btn-primary {
+    width: 100%;
   }
 }
 
@@ -4676,4 +5556,931 @@ body {
   color: #9CA3AF;
 }
 
+/* Marketplace Phase 3 */
+.public-navbar {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.96);
+}
 
+.public-navbar-container {
+  width: 100%;
+  max-width: 1200px;
+  padding: 0.75rem 2rem;
+}
+
+.public-navbar-brand {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.public-navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.public-navbar-links .nav-text-link {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #4B5563;
+  text-decoration: none;
+  letter-spacing: 0;
+}
+
+.public-navbar-links .nav-text-link:hover {
+  color: #0A0A0A;
+}
+
+.public-navbar-links .nav-signin-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0.45rem 0.85rem;
+  border-radius: 7px;
+  background-color: #111827;
+  color: #FFFFFF;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-decoration: none;
+  letter-spacing: 0;
+}
+
+.marketplace-shell {
+  min-height: 100vh;
+  background-color: #F8F8F7;
+  color: #0A0A0A;
+}
+
+.marketplace-container {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.marketplace-page {
+  padding: 4rem 0 5rem;
+}
+
+.marketplace-hero {
+  padding: 5rem 0 4rem;
+  background-color: #FFFFFF;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.marketplace-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+  gap: 3rem;
+  align-items: center;
+}
+
+.marketplace-hero-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.25rem;
+}
+
+.marketplace-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  color: #2563EB;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.marketplace-hero h1,
+.marketplace-listing-header h1,
+.business-profile-main h1,
+.booking-context-panel h1,
+.confirmation-card h1 {
+  letter-spacing: 0;
+}
+
+.marketplace-hero h1 {
+  max-width: 720px;
+  font-size: 3.25rem;
+  line-height: 1.08;
+  margin: 0;
+}
+
+.marketplace-hero-copy p {
+  max-width: 700px;
+  color: #4B5563;
+  font-size: 1.05rem;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.marketplace-actions,
+.booking-form-actions,
+.confirmation-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.marketplace-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 42px;
+  text-decoration: none;
+  line-height: 1.2;
+  white-space: normal;
+}
+
+.marketplace-owner-link {
+  font-size: 0.875rem;
+  color: #6B7280;
+}
+
+.marketplace-owner-link a {
+  color: #111827;
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.marketplace-preview-panel {
+  background-color: #111827;
+  border: 1px solid #1F2937;
+  border-radius: 8px;
+  color: #FFFFFF;
+  padding: 1rem;
+  box-shadow: 0 18px 50px rgba(17, 24, 39, 0.14);
+}
+
+.marketplace-preview-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  color: #D1D5DB;
+  font-size: 0.8rem;
+}
+
+.marketplace-preview-header strong {
+  color: #FFFFFF;
+}
+
+.marketplace-preview-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding-top: 1rem;
+}
+
+.marketplace-preview-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 7px;
+  padding: 0.8rem;
+}
+
+.marketplace-preview-row div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.marketplace-preview-row strong {
+  color: #FFFFFF;
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.marketplace-preview-row span,
+.marketplace-preview-row em {
+  color: #C7D2FE;
+  font-size: 0.78rem;
+  font-style: normal;
+}
+
+.marketplace-section {
+  padding: 4.5rem 0;
+}
+
+.marketplace-section-muted {
+  background-color: #FFFFFF;
+  border-top: 1px solid #E5E7EB;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.marketplace-section-heading {
+  max-width: 720px;
+  margin-bottom: 2rem;
+}
+
+.marketplace-section-heading.compact {
+  margin-bottom: 1.4rem;
+}
+
+.marketplace-section-heading h2 {
+  font-size: 2rem;
+  line-height: 1.2;
+  margin: 0.45rem 0 0.6rem;
+  letter-spacing: 0;
+}
+
+.marketplace-section-heading p {
+  margin: 0;
+  color: #6B7280;
+  line-height: 1.65;
+}
+
+.marketplace-card-grid,
+.marketplace-business-grid,
+.service-list-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.marketplace-business-card,
+.service-request-card,
+.faq-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 1.25rem;
+  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.04);
+}
+
+.marketplace-business-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  min-height: 260px;
+}
+
+.marketplace-card-topline,
+.marketplace-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  color: #6B7280;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.marketplace-card-topline strong {
+  color: #166534;
+  background-color: #DCFCE7;
+  border-radius: 4px;
+  padding: 0.15rem 0.4rem;
+}
+
+.marketplace-business-card h2,
+.marketplace-business-card h3 {
+  font-size: 1.2rem;
+  line-height: 1.25;
+  margin: 0;
+  letter-spacing: 0;
+}
+
+.marketplace-business-card p {
+  color: #4B5563;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  margin: 0;
+  flex: 1;
+}
+
+.marketplace-card-link,
+.marketplace-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #2563EB;
+  font-size: 0.875rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.marketplace-loading,
+.marketplace-error,
+.marketplace-empty-state {
+  background-color: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 1.25rem;
+  color: #4B5563;
+}
+
+.marketplace-error {
+  color: #991B1B;
+  background-color: #FEF2F2;
+  border-color: #FECACA;
+}
+
+.marketplace-empty-state {
+  max-width: 620px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.8rem;
+}
+
+.marketplace-empty-state.compact {
+  max-width: none;
+}
+
+.marketplace-empty-state h1,
+.marketplace-empty-state h2,
+.marketplace-empty-state h3 {
+  margin: 0;
+  letter-spacing: 0;
+}
+
+.marketplace-empty-state p {
+  margin: 0;
+  color: #6B7280;
+}
+
+.marketplace-journey-grid,
+.business-profile-lower-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.8fr);
+  gap: 2rem;
+  align-items: start;
+}
+
+.marketplace-steps,
+.marketplace-owner-stack,
+.faq-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.marketplace-step,
+.marketplace-owner-item,
+.business-trust-card div,
+.confirmation-next div,
+.booking-trust-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.marketplace-step,
+.marketplace-owner-item {
+  background-color: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.marketplace-step > span {
+  flex: 0 0 auto;
+  color: #2563EB;
+  font-weight: 800;
+  font-size: 0.8rem;
+}
+
+.marketplace-step h3,
+.marketplace-owner-item h3 {
+  font-size: 1rem;
+  margin: 0 0 0.25rem;
+  letter-spacing: 0;
+}
+
+.marketplace-step p,
+.marketplace-owner-item p {
+  margin: 0;
+  color: #6B7280;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.marketplace-owner-item svg,
+.business-trust-card svg,
+.confirmation-next svg,
+.booking-trust-note svg {
+  flex: 0 0 auto;
+  color: #16A34A;
+  margin-top: 0.15rem;
+}
+
+.marketplace-os-band {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 0.8fr);
+  gap: 2rem;
+  align-items: center;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+  background-color: #FFFFFF;
+}
+
+.marketplace-os-band h2 {
+  margin: 0.4rem 0 0.65rem;
+  font-size: 1.9rem;
+  letter-spacing: 0;
+}
+
+.marketplace-os-band p {
+  margin: 0;
+  color: #6B7280;
+  line-height: 1.65;
+}
+
+.marketplace-os-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+}
+
+.marketplace-os-metrics div {
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  background-color: #F9FAFB;
+}
+
+.marketplace-os-metrics svg {
+  color: #2563EB;
+}
+
+.marketplace-os-metrics strong {
+  font-size: 0.9rem;
+}
+
+.marketplace-os-metrics span {
+  color: #6B7280;
+  font-size: 0.8rem;
+}
+
+.marketplace-footer {
+  background-color: #111827;
+  color: #D1D5DB;
+  padding: 1.5rem 0;
+}
+
+.marketplace-footer .marketplace-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
+.marketplace-footer div div {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.marketplace-footer a {
+  color: #D1D5DB;
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+
+.marketplace-listing-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  gap: 2rem;
+  align-items: end;
+  margin-bottom: 2rem;
+}
+
+.marketplace-listing-header h1 {
+  font-size: 2.5rem;
+  margin: 0.45rem 0 0.55rem;
+}
+
+.marketplace-listing-header p {
+  margin: 0;
+  color: #6B7280;
+}
+
+.marketplace-search-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.marketplace-search-box label,
+.marketplace-form .form-label {
+  color: #111827;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.business-profile-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  gap: 2rem;
+  align-items: start;
+}
+
+.business-profile-main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.business-profile-main h1 {
+  margin: 0;
+  font-size: 2.8rem;
+  line-height: 1.1;
+}
+
+.business-profile-main p {
+  max-width: 760px;
+  color: #4B5563;
+  font-size: 1rem;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.business-profile-meta {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.business-profile-meta span {
+  background-color: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 6px;
+  color: #4B5563;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.35rem 0.6rem;
+}
+
+.business-profile-side,
+.business-trust-card,
+.booking-context-panel,
+.booking-form-card,
+.confirmation-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 1.4rem;
+  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.04);
+}
+
+.business-profile-side h2,
+.business-trust-card h2,
+.confirmation-next h2 {
+  font-size: 1rem;
+  margin: 0 0 1rem;
+  letter-spacing: 0;
+}
+
+.business-profile-side dl,
+.booking-context-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin: 0;
+}
+
+.business-profile-side dl div,
+.booking-context-list div,
+.confirmation-details div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.business-profile-side dt,
+.booking-context-list span,
+.confirmation-details span {
+  color: #6B7280;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.business-profile-side dd,
+.booking-context-list strong,
+.confirmation-details strong {
+  margin: 0;
+  color: #111827;
+  font-size: 0.95rem;
+}
+
+.service-request-card {
+  min-height: 230px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1.2rem;
+}
+
+.service-request-card h3,
+.faq-card h3 {
+  font-size: 1rem;
+  margin: 0 0 0.45rem;
+  letter-spacing: 0;
+}
+
+.service-request-card p,
+.faq-card p,
+.marketplace-muted-text {
+  margin: 0;
+  color: #6B7280;
+  line-height: 1.55;
+  font-size: 0.9rem;
+}
+
+.service-request-footer {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.service-request-footer > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  color: #6B7280;
+  font-size: 0.8rem;
+}
+
+.service-request-footer strong {
+  color: #111827;
+  font-size: 0.95rem;
+}
+
+.business-trust-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.business-trust-card div span,
+.booking-trust-note span,
+.confirmation-next span {
+  color: #4B5563;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.booking-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.75fr) minmax(0, 1.25fr);
+  gap: 2rem;
+  align-items: start;
+}
+
+.booking-context-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.booking-context-panel h1 {
+  font-size: 2rem;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.booking-context-panel p {
+  margin: 0;
+  color: #4B5563;
+  line-height: 1.65;
+}
+
+.booking-trust-note {
+  background-color: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  border-radius: 8px;
+  padding: 0.9rem;
+}
+
+.marketplace-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.marketplace-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.marketplace-form textarea.form-input {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.marketplace-form input[readonly] {
+  background-color: #F3F4F6;
+  color: #6B7280;
+}
+
+.form-field-error {
+  margin: 0.35rem 0 0;
+  color: #B91C1C;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.confirmation-layout {
+  display: flex;
+  justify-content: center;
+}
+
+.confirmation-card {
+  width: 100%;
+  max-width: 680px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.confirmation-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #16A34A;
+  background-color: #F0FDF4;
+  border: 1px solid #BBF7D0;
+}
+
+.confirmation-card h1 {
+  font-size: 2rem;
+  margin: 0;
+}
+
+.confirmation-card > p {
+  margin: 0;
+  color: #4B5563;
+  line-height: 1.65;
+  max-width: 560px;
+}
+
+.confirmation-details {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+  text-align: left;
+  margin-top: 0.5rem;
+}
+
+.confirmation-details div {
+  background-color: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 0.9rem;
+}
+
+.confirmation-next {
+  width: 100%;
+  text-align: left;
+  background-color: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.confirmation-next h2 {
+  margin-bottom: 0.75rem;
+}
+
+.confirmation-next div + div {
+  margin-top: 0.65rem;
+}
+
+.confirmation-actions {
+  justify-content: center;
+  margin-top: 0.25rem;
+}
+
+.confirmation-profile-link {
+  margin-top: 0.25rem;
+}
+
+@media (max-width: 920px) {
+  .public-navbar-container {
+    align-items: flex-start;
+    gap: 0.85rem;
+  }
+
+  .public-navbar-links {
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .marketplace-hero-grid,
+  .marketplace-journey-grid,
+  .marketplace-os-band,
+  .business-profile-hero,
+  .business-profile-lower-grid,
+  .booking-layout,
+  .marketplace-listing-header {
+    grid-template-columns: 1fr;
+  }
+
+  .marketplace-hero h1,
+  .business-profile-main h1 {
+    font-size: 2.4rem;
+  }
+
+  .marketplace-card-grid,
+  .marketplace-business-grid,
+  .service-list-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .marketplace-os-metrics {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .public-navbar-container {
+    padding: 0.8rem 1rem;
+  }
+
+  .public-navbar-links {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .marketplace-container {
+    padding: 0 1rem;
+  }
+
+  .marketplace-page {
+    padding: 2.5rem 0 3rem;
+  }
+
+  .marketplace-hero {
+    padding: 3rem 0;
+  }
+
+  .marketplace-hero h1,
+  .marketplace-listing-header h1,
+  .business-profile-main h1,
+  .booking-context-panel h1,
+  .confirmation-card h1 {
+    font-size: 2rem;
+  }
+
+  .marketplace-card-grid,
+  .marketplace-business-grid,
+  .service-list-grid,
+  .marketplace-form-grid,
+  .confirmation-details {
+    grid-template-columns: 1fr;
+  }
+
+  .service-request-footer,
+  .marketplace-footer .marketplace-container {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .marketplace-actions,
+  .booking-form-actions,
+  .confirmation-actions {
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .marketplace-actions .marketplace-btn,
+  .booking-form-actions .marketplace-btn,
+  .confirmation-actions .marketplace-btn {
+    width: 100%;
+  }
+}

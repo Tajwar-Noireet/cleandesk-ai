@@ -1,5 +1,14 @@
 const { isSupabaseConfigured, supabase } = require('../lib/supabaseClient');
 
+const getMockCustomerFromRequest = (req) => {
+  const rawEmail = typeof req.headers['x-customer-email'] === 'string'
+    ? req.headers['x-customer-email']
+    : 'sarah@jenkins.com';
+  const email = rawEmail.trim().toLowerCase() || 'sarah@jenkins.com';
+  const id = `mock-customer-${email.replace(/[^a-z0-9]/g, '-')}`;
+  return { id, email };
+};
+
 /**
  * Middleware to check authentication via Supabase JWT or fallback mock auth.
  * 
@@ -12,7 +21,7 @@ const authMiddleware = async (req, res, next) => {
     // If running in Mock Mode, assign a dummy user
     if (!isSupabaseConfigured()) {
       if (req.originalUrl && req.originalUrl.includes('/api/customer')) {
-        req.user = { id: 'mock-customer-sarah-uuid', email: 'sarah@jenkins.com' };
+        req.user = getMockCustomerFromRequest(req);
       } else {
         req.user = { id: 'mock-user-123', email: 'owner@sparklehome.co.uk' };
       }
@@ -30,7 +39,7 @@ const authMiddleware = async (req, res, next) => {
       return next();
     }
     if (token === 'mock-customer-token') {
-      req.user = { id: 'mock-customer-sarah-uuid', email: 'sarah@jenkins.com' };
+      req.user = getMockCustomerFromRequest(req);
       return next();
     }
     return res.status(401).json({ error: 'Invalid token (Mock Mode)' });

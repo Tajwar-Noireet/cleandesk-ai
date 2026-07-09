@@ -1,219 +1,193 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import CustomerLayout from '../components/CustomerLayout';
 import { api } from '../services/api';
-import { MessageIcon, ClockIcon } from '../components/Icons';
-import { fadeUp, staggerContainer } from '../utils/motionPresets';
+import { ArrowRightIcon, MessageIcon } from '../components/Icons';
+
+const formatDate = (value) => {
+  if (!value) return 'Not set';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+};
+
+const groupByBusiness = (conversations) => {
+  const groups = new Map();
+  conversations.forEach((conversation) => {
+    const key = conversation.business_id || 'unknown';
+    if (!groups.has(key)) {
+      groups.set(key, {
+        business_id: conversation.business_id,
+        business_name: conversation.business_name || 'Service business',
+        business_slug: conversation.business_slug,
+        category: conversation.category,
+        city: conversation.city,
+        service_area: conversation.service_area,
+        conversations: []
+      });
+    }
+    groups.get(key).conversations.push(conversation);
+  });
+  return [...groups.values()].sort((a, b) => a.business_name.localeCompare(b.business_name));
+};
 
 const CustomerConversations = () => {
   const [conversations, setConversations] = useState([]);
-  const [activeConvId, setActiveConvId] = useState(null);
+  const [activeConversationId, setActiveConversationId] = useState(null);
   const [activeDetail, setActiveDetail] = useState(null);
   const [loading, setLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
 
-  const loadConversations = async () => {
-    try {
-      setLoading(true);
-      const res = await api.customerGetConversations();
-      setConversations(res);
-      if (res && res.length > 0) {
-        setActiveConvId(res[0].id);
-      }
-    } catch (err) {
-      console.error('Failed to load conversations:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadDetail = async (id) => {
-    try {
-      setDetailLoading(true);
-      const res = await api.customerGetConversationDetail(id);
-      setActiveDetail(res);
-    } catch (err) {
-      console.error('Failed to load conversation details:', err);
-    } finally {
-      setDetailLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const loadConversations = async () => {
+      try {
+        setLoading(true);
+        const response = await api.customerGetConversations();
+        setConversations(response || []);
+        if (response?.length > 0) {
+          setActiveConversationId(response[0].id);
+        }
+      } catch (err) {
+        console.error('Failed to load conversations:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadConversations();
   }, []);
 
   useEffect(() => {
-    if (activeConvId) {
-      loadDetail(activeConvId);
-    }
-  }, [activeConvId]);
+    const loadDetail = async () => {
+      if (!activeConversationId) {
+        setActiveDetail(null);
+        return;
+      }
+
+      try {
+        setDetailLoading(true);
+        const response = await api.customerGetConversationDetail(activeConversationId);
+        setActiveDetail(response);
+      } catch (err) {
+        console.error('Failed to load conversation details:', err);
+        setActiveDetail(null);
+      } finally {
+        setDetailLoading(false);
+      }
+    };
+
+    loadDetail();
+  }, [activeConversationId]);
+
+  const groupedConversations = useMemo(() => groupByBusiness(conversations), [conversations]);
 
   if (loading) {
     return (
       <CustomerLayout>
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem 0', color: '#6B7280', fontSize: '0.9rem' }}>
-          Loading your conversation logs...
-        </div>
+        <div className="customer-loading">Loading your conversations...</div>
       </CustomerLayout>
     );
   }
 
   return (
     <CustomerLayout>
-      <motion.div 
-        variants={staggerContainer}
-        initial="hidden"
-        animate="visible"
-        style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
-      >
-        <motion.div variants={fadeUp} style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '1rem' }}>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: '700', margin: 0, color: '#0A0A0A' }}>
-            Chat Audit Logs
-          </h1>
-          <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: '#6B7280' }}>
-            Review historical transcripts of your conversations with the CleanDesk automated assistant.
-          </p>
-        </motion.div>
+      <div className="customer-portal-page">
+        <header className="customer-page-header">
+          <div>
+            <span className="customer-eyebrow">Customer conversations</span>
+            <h1>Conversations by business</h1>
+            <p>Review messages and request context across the businesses you contacted.</p>
+          </div>
+        </header>
 
         {conversations.length === 0 ? (
-          <motion.div variants={fadeUp} className="glass-auth-card" style={{ padding: '3rem', textAlign: 'center' }}>
-            <MessageIcon size={32} style={{ color: '#9CA3AF', marginBottom: '1rem' }} />
-            <h3 style={{ margin: 0, color: '#0A0A0A' }}>No chat history available</h3>
-            <p style={{ color: '#6B7280', fontSize: '0.85rem', marginTop: '0.5rem' }}>
-              We could not find any conversation logs linked to your customer session.
-            </p>
-          </motion.div>
+          <section className="customer-empty-state">
+            <MessageIcon size={30} />
+            <h2>No conversations yet</h2>
+            <p>Submit an enquiry to a business and the conversation trail will appear here.</p>
+            <Link to="/businesses" className="btn-primary marketplace-btn">
+              Browse businesses <ArrowRightIcon size={14} />
+            </Link>
+          </section>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1.5rem', height: 'calc(100vh - 220px)', minHeight: '450px' }}>
-            {/* Left Column: Conversations List */}
-            <motion.div 
-              variants={fadeUp} 
-              className="glass-auth-card" 
-              style={{ padding: '1rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}
-            >
-              {conversations.map(conv => {
-                const isActive = conv.id === activeConvId;
-                return (
-                  <div
-                    key={conv.id}
-                    onClick={() => setActiveConvId(conv.id)}
-                    style={{
-                      padding: '0.75rem',
-                      borderRadius: '6px',
-                      border: '1px solid',
-                      borderColor: isActive ? '#2563EB' : 'var(--color-border)',
-                      background: isActive ? 'rgba(37, 99, 235, 0.02)' : '#FFFFFF',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '0.2rem'
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <strong style={{ fontSize: '0.8rem', color: '#0A0A0A' }}>
-                        {conv.customer_name || 'Anonymous Session'}
-                      </strong>
-                      <span className={`pill status-${conv.status}`} style={{ fontSize: '0.55rem', padding: '0.1rem 0.3rem' }}>
-                        {conv.status}
-                      </span>
+          <section className="customer-conversation-layout">
+            <div className="customer-conversation-list">
+              {groupedConversations.map((group) => (
+                <article className="customer-conversation-group" key={group.business_id || group.business_name}>
+                  <div className="customer-conversation-group-header">
+                    <div>
+                      <span>{group.category || 'Service business'}</span>
+                      <h2>{group.business_name}</h2>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.7rem', color: '#6B7280' }}>
-                      <ClockIcon size={10} />
-                      <span>{new Date(conv.created_at).toLocaleDateString()}</span>
-                    </div>
+                    {group.business_slug ? (
+                      <Link to={`/business/${group.business_slug}`} className="marketplace-card-link">
+                        View business
+                      </Link>
+                    ) : null}
                   </div>
-                );
-              })}
-            </motion.div>
 
-            {/* Right Column: Chat Messages Transcripts */}
-            <motion.div 
-              variants={fadeUp} 
-              className="glass-auth-card" 
-              style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
-            >
-              <AnimatePresence mode="wait">
-                {detailLoading ? (
-                  <div key="loading" style={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center', color: '#6B7280', fontSize: '0.85rem' }}>
-                    Loading message history...
-                  </div>
-                ) : activeDetail ? (
-                  <motion.div 
-                    key={activeConvId}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.15 }}
-                    style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
-                  >
-                    {/* Header */}
-                    <div style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '0.75rem', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  {group.conversations.map((conversation) => (
+                    <button
+                      type="button"
+                      className={`customer-conversation-item ${conversation.id === activeConversationId ? 'active' : ''}`}
+                      key={conversation.id}
+                      onClick={() => setActiveConversationId(conversation.id)}
+                    >
                       <div>
-                        <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 600, color: '#0A0A0A' }}>
-                          Session Details: {activeDetail.customer_name || 'Anonymous'}
-                        </h4>
-                        <span style={{ fontSize: '0.7rem', color: '#6B7280' }}>ID: {activeDetail.id}</span>
+                        <strong>{conversation.service_type || 'General service request'}</strong>
+                        <span>{conversation.last_message_preview || 'No message preview yet'}</span>
                       </div>
-                      {activeDetail.needs_human_review && (
-                        <span className="pill status-new" style={{ fontSize: '0.65rem', backgroundColor: '#FEF3C7', color: '#D97706', borderColor: '#F59E0B' }}>
-                          ⚠️ Flagged for Takeover
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Messages Body */}
-                    <div style={{ flex: 1, overflowY: 'auto', paddingRight: '0.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                      {activeDetail.messages && activeDetail.messages.length === 0 ? (
-                        <div style={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center', color: '#9CA3AF', fontSize: '0.8rem' }}>
-                          No messages recorded in this chat.
+                      <dl>
+                        <div>
+                          <dt>Status</dt>
+                          <dd>{conversation.status || 'open'}</dd>
                         </div>
-                      ) : (
-                        activeDetail.messages?.map(msg => {
-                          const isCustomer = msg.sender === 'customer';
-                          return (
-                            <div 
-                              key={msg.id}
-                              style={{
-                                display: 'flex',
-                                justifyContent: isCustomer ? 'flex-end' : 'flex-start',
-                                width: '100%'
-                              }}
-                            >
-                              <div 
-                                style={{
-                                  maxWidth: '80%',
-                                  padding: '0.6rem 0.9rem',
-                                  borderRadius: '12px',
-                                  border: '1px solid',
-                                  borderColor: isCustomer ? 'rgba(37, 99, 235, 0.15)' : 'var(--color-border)',
-                                  backgroundColor: isCustomer ? 'rgba(37, 99, 235, 0.03)' : '#FFFFFF',
-                                  color: '#0A0A0A',
-                                  fontSize: '0.85rem',
-                                  lineHeight: 1.45
-                                }}
-                              >
-                                <div style={{ fontSize: '0.65rem', color: '#6B7280', fontWeight: 'bold', marginBottom: '0.15rem' }}>
-                                  {isCustomer ? 'You (Customer)' : msg.sender === 'ai' ? 'Assistant' : 'Business Operator'}
-                                </div>
-                                <p style={{ margin: 0 }}>{msg.content}</p>
-                              </div>
-                            </div>
-                          );
-                        })
-                      )}
-                    </div>
-                  </motion.div>
-                ) : (
-                  <div key="select" style={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center', color: '#6B7280', fontSize: '0.85rem' }}>
-                    Select a conversation log to view.
+                        <div>
+                          <dt>Updated</dt>
+                          <dd>{formatDate(conversation.last_message_at || conversation.updated_at || conversation.created_at)}</dd>
+                        </div>
+                      </dl>
+                    </button>
+                  ))}
+                </article>
+              ))}
+            </div>
+
+            <aside className="customer-conversation-detail">
+              {detailLoading ? (
+                <div className="customer-loading compact">Loading conversation...</div>
+              ) : activeDetail ? (
+                <>
+                  <div className="customer-conversation-detail-header">
+                    <span>{activeDetail.business_name || 'Service business'}</span>
+                    <h2>{activeDetail.service_type || 'Conversation'}</h2>
+                    <p>Status: {activeDetail.status || 'open'}</p>
                   </div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          </div>
+
+                  <div className="customer-message-stack">
+                    {(activeDetail.messages || []).length === 0 ? (
+                      <p className="customer-muted-text">No messages recorded yet.</p>
+                    ) : (
+                      activeDetail.messages.map((message) => (
+                        <div className={`customer-message ${message.sender === 'customer' ? 'customer' : 'business'}`} key={message.id}>
+                          <span>{message.sender === 'customer' ? 'You' : 'Business'}</span>
+                          <p>{message.content}</p>
+                          <time>{formatDate(message.created_at)}</time>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="customer-empty-state compact">
+                  <h2>Select a conversation</h2>
+                  <p>Choose a conversation to view its message history.</p>
+                </div>
+              )}
+            </aside>
+          </section>
         )}
-      </motion.div>
+      </div>
     </CustomerLayout>
   );
 };

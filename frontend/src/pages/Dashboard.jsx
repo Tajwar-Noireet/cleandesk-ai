@@ -45,7 +45,7 @@ const Dashboard = () => {
             setUserEmail(user.email);
           }
         } else {
-          setUserEmail('owner@sparklehome.co.uk');
+          setUserEmail('owner@cleandesk.local');
         }
 
         const bData = await api.getBusinessOfCurrentUser();

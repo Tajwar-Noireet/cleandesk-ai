@@ -30,6 +30,7 @@ const chatRoutes = require('./routes/chatRoutes');
 const leadRoutes = require('./routes/leadRoutes');
 const conversationRoutes = require('./routes/conversationRoutes');
 const customerRoutes = require('./routes/customerRoutes');
+const publicRoutes = require('./routes/publicRoutes');
 
 // Root Health check
 app.get('/health', (req, res) => {
@@ -48,6 +49,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/leads', leadRoutes);
 app.use('/api/conversations', conversationRoutes);
 app.use('/api/customer', customerRoutes);
+app.use('/api/public', publicRoutes);
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {

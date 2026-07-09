@@ -66,6 +66,17 @@ exports.getLeadsByBusiness = async (req, res) => {
     return res.status(403).json({ error: 'Forbidden: You do not own this business profile' });
   }
 
+  let businessSlug = null;
+  if (isSupabaseConfigured()) {
+    try {
+      const { data } = await supabase.from('businesses').select('slug').eq('id', businessId).limit(1);
+      businessSlug = data?.[0]?.slug;
+    } catch (e) {}
+  } else {
+    const b = mockStore.businesses.find(item => item.id === businessId);
+    businessSlug = b?.slug;
+  }
+
   if (isSupabaseConfigured()) {
     try {
       const { data, error } = await supabase
@@ -78,6 +89,16 @@ exports.getLeadsByBusiness = async (req, res) => {
         console.error(`❌ Supabase error loading leads for business ${businessId}:`, error.message);
         throw error;
       }
+
+      console.log('⚡ [DEV LOG] GET /api/leads/:businessId (Supabase):', JSON.stringify({
+        authenticated_owner_user_id: userId,
+        resolved_owner_business_id: businessId,
+        owner_business_slug: businessSlug,
+        number_of_leads_found: data ? data.length : 0,
+        returned_lead_ids: data ? data.map(l => l.id) : [],
+        returned_lead_business_ids: data ? data.map(l => l.business_id) : []
+      }, null, 2));
+
       return res.json(data || []);
     } catch (err) {
       return res.status(500).json({ error: `Supabase load leads failed: ${err.message}` });
@@ -88,6 +109,16 @@ exports.getLeadsByBusiness = async (req, res) => {
   const leads = mockStore.leads
     .filter(l => l.business_id === businessId)
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+  console.log('⚡ [DEV LOG] GET /api/leads/:businessId (Mock):', JSON.stringify({
+    authenticated_owner_user_id: userId,
+    resolved_owner_business_id: businessId,
+    owner_business_slug: businessSlug,
+    number_of_leads_found: leads.length,
+    returned_lead_ids: leads.map(l => l.id),
+    returned_lead_business_ids: leads.map(l => l.business_id)
+  }, null, 2));
+
   res.json(leads);
 };
 

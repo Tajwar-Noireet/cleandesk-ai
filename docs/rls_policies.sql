@@ -10,6 +10,9 @@ ALTER TABLE leads ENABLE ROW LEVEL SECURITY;
 
 -- 2. Define policies for businesses
 -- Only authenticated users can manage their own business profile
+-- Public marketplace reads are served by the Express /api/public routes using
+-- public-safe field selection. Do not add a broad anon SELECT policy here,
+-- because table-level policies cannot hide owner/internal columns.
 CREATE POLICY "Users can CRUD own business" ON businesses
   FOR ALL
   TO authenticated

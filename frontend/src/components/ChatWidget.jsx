@@ -117,7 +117,7 @@ const ChatWidget = ({ businessId, demoMode = false }) => {
                 <p className="chat-subtitle">
                   {needsHumanReview 
                     ? 'Owner notified to review' 
-                    : `SparkleHome Cleaning • Confidence: ${Math.round(confidence * 100)}%`}
+                    : `Service workspace - Confidence: ${Math.round(confidence * 100)}%`}
                 </p>
               </div>
             </div>
@@ -155,7 +155,7 @@ const ChatWidget = ({ businessId, demoMode = false }) => {
               className="chat-input"
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
-              placeholder="Ask a question or book a clean..."
+              placeholder="Ask a question or request a service..."
               disabled={isTyping}
             />
             <button type="submit" className="chat-send-btn" disabled={isTyping}>

@@ -81,7 +81,7 @@ const CustomerProfile = () => {
             Customer Profile
           </h1>
           <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: '#6B7280' }}>
-            Manage your personal profile details. All booking logs will use these details.
+            Manage your customer profile details. Marketplace requests use these details for follow-up.
           </p>
         </motion.div>
 
@@ -93,7 +93,7 @@ const CustomerProfile = () => {
         >
           {success && (
             <div className="form-message-alert success" style={{ fontSize: '0.85rem' }}>
-              ✓ {success}
+              {success}
             </div>
           )}
 
@@ -148,9 +148,9 @@ const CustomerProfile = () => {
             />
           </div>
 
-          {/* Default Cleaning Address */}
+          {/* Default Service Address */}
           <div className="form-group">
-            <label className="form-label" htmlFor="prof-address" style={{ fontWeight: '600' }}>Default Address</label>
+            <label className="form-label" htmlFor="prof-address" style={{ fontWeight: '600' }}>Default Service Address</label>
             <input
               id="prof-address"
               type="text"

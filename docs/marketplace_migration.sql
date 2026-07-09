@@ -1,28 +1,18 @@
--- Supabase PostgreSQL Schema for CleanDesk AI
+-- Marketplace migration for CleanDesk AI
+-- Execute this in the Supabase SQL Editor before enabling marketplace routes.
 
--- Enable UUID extension
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS slug TEXT;
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS is_public BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS category TEXT;
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS city TEXT;
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS postcode TEXT;
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS public_description TEXT;
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS rating NUMERIC DEFAULT 0;
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS logo_url TEXT;
 
--- 1. Businesses Table
-CREATE TABLE IF NOT EXISTS businesses (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID, -- References auth.users(id) in Supabase
-  name TEXT NOT NULL,
-  slug TEXT UNIQUE,
-  phone TEXT,
-  email TEXT,
-  service_area TEXT,
-  opening_hours TEXT,
-  description TEXT,
-  is_public BOOLEAN NOT NULL DEFAULT FALSE,
-  category TEXT,
-  city TEXT,
-  postcode TEXT,
-  public_description TEXT,
-  rating NUMERIC DEFAULT 0,
-  logo_url TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
-);
+CREATE UNIQUE INDEX IF NOT EXISTS businesses_slug_unique_idx
+  ON businesses (slug)
+  WHERE slug IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS businesses_public_city_idx
   ON businesses (is_public, city);
@@ -30,84 +20,6 @@ CREATE INDEX IF NOT EXISTS businesses_public_city_idx
 CREATE INDEX IF NOT EXISTS businesses_public_category_idx
   ON businesses (is_public, category);
 
--- 2. Services Table
-CREATE TABLE IF NOT EXISTS services (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  slug TEXT,
-  is_public BOOLEAN NOT NULL DEFAULT TRUE,
-  short_description TEXT,
-  long_description TEXT,
-  description TEXT,
-  base_price TEXT,
-  price_unit TEXT,
-  estimated_duration TEXT,
-  duration_estimate TEXT,
-  service_area TEXT,
-  category TEXT,
-  image_url TEXT,
-  sort_order INTEGER NOT NULL DEFAULT 0,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
-);
-
--- Unique constraint for business service slugs
-CREATE UNIQUE INDEX IF NOT EXISTS services_business_slug_unique_idx
-  ON services (business_id, slug)
-  WHERE slug IS NOT NULL;
-
--- 3. FAQs Table
-CREATE TABLE IF NOT EXISTS faqs (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
-  question TEXT NOT NULL,
-  answer TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
-);
-
--- 4. Conversations Table
-CREATE TABLE IF NOT EXISTS conversations (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
-  service_id UUID,
-  customer_name TEXT,
-  customer_phone TEXT,
-  customer_email TEXT,
-  customer_user_id UUID,
-  status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'closed', 'snoozed')),
-  ai_confidence NUMERIC DEFAULT 1.0,
-  needs_human_review BOOLEAN NOT NULL DEFAULT FALSE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
-);
-
--- 5. Messages Table
-CREATE TABLE IF NOT EXISTS messages (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
-  sender TEXT NOT NULL CHECK (sender IN ('customer', 'ai', 'owner')),
-  content TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
-);
-
--- 6. Leads Table
-CREATE TABLE IF NOT EXISTS leads (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
-  conversation_id UUID REFERENCES conversations(id) ON DELETE SET NULL,
-  service_id UUID,
-  customer_name TEXT,
-  customer_phone TEXT,
-  customer_email TEXT,
-  customer_user_id UUID,
-  address TEXT,
-  service_type TEXT,
-  preferred_date TEXT,
-  notes TEXT,
-  status TEXT NOT NULL DEFAULT 'new' CHECK (status IN ('new', 'contacted', 'booked', 'lost')),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
-);
-
--- Marketplace seed businesses. SparkleHome is demo seed data, not a product default.
 INSERT INTO businesses (
   id,
   name,
@@ -193,7 +105,6 @@ ON CONFLICT (id) DO UPDATE SET
   rating = EXCLUDED.rating,
   logo_url = EXCLUDED.logo_url;
 
--- Seed Services
 INSERT INTO services (id, business_id, name, description, base_price, estimated_duration)
 VALUES
   ('11111111-1111-4111-8111-111111111101', 'd3b07384-d113-4ec5-a5d6-c6e7f8d9a101', 'Regular home cleaning', 'Standard dusting, vacuuming, mopping, kitchen and bathroom sanitization.', 'GBP 40', '2 hours'),
@@ -212,7 +123,6 @@ ON CONFLICT (id) DO UPDATE SET
   base_price = EXCLUDED.base_price,
   estimated_duration = EXCLUDED.estimated_duration;
 
--- Seed FAQs
 INSERT INTO faqs (id, business_id, question, answer)
 VALUES
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa01', 'd3b07384-d113-4ec5-a5d6-c6e7f8d9a101', 'Do you bring cleaning supplies?', 'Yes, the team brings standard eco-friendly cleaning supplies and equipment.'),

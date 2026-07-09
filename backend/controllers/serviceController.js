@@ -11,7 +11,7 @@ const checkBusinessOwnership = async (userId, businessId) => {
         .from('businesses')
         .select('user_id')
         .eq('id', businessId);
-      
+
       if (error || !data || data.length === 0) {
         return false;
       }
@@ -38,7 +38,7 @@ const checkServiceOwnership = async (userId, serviceId) => {
         .from('services')
         .select('business_id')
         .eq('id', serviceId);
-      
+
       if (error || !data || data.length === 0) {
         return false;
       }
@@ -55,6 +55,39 @@ const checkServiceOwnership = async (userId, serviceId) => {
   return await checkBusinessOwnership(userId, service.business_id);
 };
 
+const normalizeServiceSlug = (value) =>
+  (value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+const ensureServiceSlugIsAvailable = async (businessId, slug, currentServiceId = null) => {
+  if (!slug) return true;
+
+  if (isSupabaseConfigured()) {
+    let query = supabase
+      .from('services')
+      .select('id')
+      .eq('business_id', businessId)
+      .eq('slug', slug)
+      .limit(1);
+
+    if (currentServiceId) {
+      query = query.neq('id', currentServiceId);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return !data || data.length === 0;
+  }
+
+  const conflict = mockStore.services.find(
+    s => s.business_id === businessId && s.slug === slug && s.id !== currentServiceId
+  );
+  return !conflict;
+};
+
 // Get services for a business
 exports.getServicesByBusiness = async (req, res) => {
   const { businessId } = req.params;
@@ -65,7 +98,7 @@ exports.getServicesByBusiness = async (req, res) => {
         .from('services')
         .select('*')
         .eq('business_id', businessId);
-      
+
       if (error) {
         console.error(`❌ Supabase error loading services for business ${businessId}:`, error.message);
         throw error;
@@ -83,7 +116,24 @@ exports.getServicesByBusiness = async (req, res) => {
 
 // Create a service
 exports.createService = async (req, res) => {
-  const { business_id, name, description, base_price, estimated_duration } = req.body;
+  const {
+    business_id,
+    name,
+    slug,
+    is_public,
+    short_description,
+    long_description,
+    description,
+    base_price,
+    price_unit,
+    estimated_duration,
+    duration_estimate,
+    service_area,
+    category,
+    image_url,
+    sort_order
+  } = req.body;
+
   const userId = req.user ? req.user.id : null;
 
   // Enforce ownership
@@ -92,11 +142,35 @@ exports.createService = async (req, res) => {
     return res.status(403).json({ error: 'Forbidden: You do not own this business profile' });
   }
 
+  const finalSlug = slug ? normalizeServiceSlug(slug) : normalizeServiceSlug(name);
+  const isSlugValid = await ensureServiceSlugIsAvailable(business_id, finalSlug);
+  if (!isSlugValid) {
+    return res.status(409).json({ error: `The service slug "${finalSlug}" is already in use by this business.` });
+  }
+
+  const payload = {
+    business_id,
+    name,
+    slug: finalSlug || null,
+    is_public: is_public !== false,
+    short_description: short_description || null,
+    long_description: long_description || description || null,
+    description: description || short_description || null,
+    base_price: base_price || null,
+    price_unit: price_unit || null,
+    estimated_duration: estimated_duration || duration_estimate || null,
+    duration_estimate: duration_estimate || estimated_duration || null,
+    service_area: service_area || null,
+    category: category || null,
+    image_url: image_url || null,
+    sort_order: parseInt(sort_order, 10) || 0
+  };
+
   if (isSupabaseConfigured()) {
     try {
       const { data, error } = await supabase
         .from('services')
-        .insert([{ business_id, name, description, base_price, estimated_duration }])
+        .insert([payload])
         .select();
 
       if (error) {
@@ -112,11 +186,8 @@ exports.createService = async (req, res) => {
   // Mock Store insertion
   const newService = {
     id: `s-${Date.now()}`,
-    business_id,
-    name,
-    description,
-    base_price,
-    estimated_duration
+    ...payload,
+    created_at: new Date().toISOString()
   };
   mockStore.services.push(newService);
   res.status(201).json(newService);
@@ -125,7 +196,24 @@ exports.createService = async (req, res) => {
 // Update a service
 exports.updateService = async (req, res) => {
   const { id } = req.params;
-  const { name, description, base_price, estimated_duration } = req.body;
+  const {
+    business_id,
+    name,
+    slug,
+    is_public,
+    short_description,
+    long_description,
+    description,
+    base_price,
+    price_unit,
+    estimated_duration,
+    duration_estimate,
+    service_area,
+    category,
+    image_url,
+    sort_order
+  } = req.body;
+
   const userId = req.user ? req.user.id : null;
 
   // Enforce ownership
@@ -134,11 +222,47 @@ exports.updateService = async (req, res) => {
     return res.status(403).json({ error: 'Forbidden: You do not own this service' });
   }
 
+  // Find business_id if not passed in req.body
+  let resolvedBusinessId = business_id;
+  if (!resolvedBusinessId) {
+    if (isSupabaseConfigured()) {
+      const { data } = await supabase.from('services').select('business_id').eq('id', id).limit(1);
+      resolvedBusinessId = data?.[0]?.business_id;
+    } else {
+      const s = mockStore.services.find(item => item.id === id);
+      resolvedBusinessId = s?.business_id;
+    }
+  }
+
+  const finalSlug = slug ? normalizeServiceSlug(slug) : (name ? normalizeServiceSlug(name) : undefined);
+  if (finalSlug !== undefined && resolvedBusinessId) {
+    const isSlugValid = await ensureServiceSlugIsAvailable(resolvedBusinessId, finalSlug, id);
+    if (!isSlugValid) {
+      return res.status(409).json({ error: `The service slug "${finalSlug}" is already in use by this business.` });
+    }
+  }
+
+  const payload = {};
+  if (name !== undefined) payload.name = name;
+  if (finalSlug !== undefined) payload.slug = finalSlug || null;
+  if (is_public !== undefined) payload.is_public = is_public !== false;
+  if (short_description !== undefined) payload.short_description = short_description;
+  if (long_description !== undefined) payload.long_description = long_description;
+  if (description !== undefined) payload.description = description;
+  if (base_price !== undefined) payload.base_price = base_price;
+  if (price_unit !== undefined) payload.price_unit = price_unit;
+  if (estimated_duration !== undefined) payload.estimated_duration = estimated_duration;
+  if (duration_estimate !== undefined) payload.duration_estimate = duration_estimate;
+  if (service_area !== undefined) payload.service_area = service_area;
+  if (category !== undefined) payload.category = category;
+  if (image_url !== undefined) payload.image_url = image_url;
+  if (sort_order !== undefined) payload.sort_order = parseInt(sort_order, 10) || 0;
+
   if (isSupabaseConfigured()) {
     try {
       const { data, error } = await supabase
         .from('services')
-        .update({ name, description, base_price, estimated_duration })
+        .update(payload)
         .eq('id', id)
         .select();
 
@@ -165,10 +289,8 @@ exports.updateService = async (req, res) => {
 
   const updated = {
     ...mockStore.services[index],
-    name: name !== undefined ? name : mockStore.services[index].name,
-    description: description !== undefined ? description : mockStore.services[index].description,
-    base_price: base_price !== undefined ? base_price : mockStore.services[index].base_price,
-    estimated_duration: estimated_duration !== undefined ? estimated_duration : mockStore.services[index].estimated_duration,
+    ...payload,
+    updated_at: new Date().toISOString()
   };
 
   mockStore.services[index] = updated;
@@ -192,7 +314,7 @@ exports.deleteService = async (req, res) => {
         .from('services')
         .delete()
         .eq('id', id);
-      
+
       if (error) {
         console.error(`❌ Supabase error deleting service ${id}:`, error.message);
         throw error;
