@@ -77,25 +77,27 @@ const Leads = () => {
         </header>
 
         {/* Temporary dev-only trace panel */}
-        <div style={{
-          backgroundColor: '#F8FAFC',
-          border: '1px solid #E2E8F0',
-          borderRadius: '8px',
-          padding: '1rem',
-          marginBottom: '1.5rem',
-          fontSize: '0.8rem',
-          fontFamily: 'monospace',
-          color: '#334155'
-        }}>
-          <h4 style={{ margin: '0 0 0.5rem 0', color: '#0F172A', fontSize: '0.85rem' }}>⚡ CleanDesk Developer Trace Panel</h4>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.5rem' }}>
-            <div><strong>Owner Business ID:</strong> {leads.length > 0 ? leads[0].business_id : 'No leads loaded'}</div>
-            <div><strong>Latest Lead ID:</strong> {leads.length > 0 ? leads[0].id : 'N/A'}</div>
-            <div><strong>Latest Lead Business ID:</strong> {leads.length > 0 ? leads[0].business_id : 'N/A'}</div>
-            <div><strong>Latest Lead Service ID:</strong> {leads.length > 0 ? (leads[0].service_id || 'N/A') : 'N/A'}</div>
-            <div><strong>Latest Lead Service Name:</strong> {leads.length > 0 ? (leads[0].service_type || 'N/A') : 'N/A'}</div>
+        {import.meta.env.DEV ? (
+          <div style={{
+            backgroundColor: '#F8FAFC',
+            border: '1px solid #E2E8F0',
+            borderRadius: '8px',
+            padding: '1rem',
+            marginBottom: '1.5rem',
+            fontSize: '0.8rem',
+            fontFamily: 'monospace',
+            color: '#334155'
+          }}>
+            <h4 style={{ margin: '0 0 0.5rem 0', color: '#0F172A', fontSize: '0.85rem' }}>⚡ CleanDesk Developer Trace Panel</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.5rem' }}>
+              <div><strong>Owner Business ID:</strong> {leads.length > 0 ? leads[0].business_id : 'No leads loaded'}</div>
+              <div><strong>Latest Lead ID:</strong> {leads.length > 0 ? leads[0].id : 'N/A'}</div>
+              <div><strong>Latest Lead Business ID:</strong> {leads.length > 0 ? leads[0].business_id : 'N/A'}</div>
+              <div><strong>Latest Lead Service ID:</strong> {leads.length > 0 ? (leads[0].service_id || 'N/A') : 'N/A'}</div>
+              <div><strong>Latest Lead Service Name:</strong> {leads.length > 0 ? (leads[0].service_type || 'N/A') : 'N/A'}</div>
+            </div>
           </div>
-        </div>
+        ) : null}
 
         <div className="leads-container">
           {filteredLeads.length === 0 ? (

@@ -15,7 +15,7 @@ const senderLabel = (sender) => {
   const clean = String(sender || '').toLowerCase().trim();
   if (clean === 'customer') return 'Customer';
   if (clean === 'ai') return 'AI receptionist';
-  if (clean === 'owner') return 'Business owner';
+  if (clean === 'owner') return 'Owner/Team';
   return 'System';
 };
 
@@ -367,8 +367,11 @@ const Conversations = () => {
                 </section>
 
                 <section className="ai-panel-section">
-                  <h3>Next action</h3>
-                  <p>{aiDraft?.next_action || activeTranscript.ai?.next_action || 'Review the latest customer message.'}</p>
+                  <h3>Analysis</h3>
+                  <p style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                    <span><strong>Intent:</strong> {aiDraft?.intent || activeTranscript.ai?.intent || 'booking_request'}</span>
+                    {confidence !== null ? <span><strong>Confidence:</strong> {confidence}%</span> : null}
+                  </p>
                 </section>
 
                 <section className="ai-panel-section">
@@ -389,8 +392,13 @@ const Conversations = () => {
                       })}
                     </ul>
                   ) : (
-                    <p>Core request details are captured.</p>
+                    <p>All core booking details have been captured.</p>
                   )}
+                </section>
+
+                <section className="ai-panel-section">
+                  <h3>Next action</h3>
+                  <p>{aiDraft?.next_action || activeTranscript.ai?.next_action || 'Review request details and confirm availability.'}</p>
                 </section>
 
                 <section className="ai-panel-section">
@@ -399,32 +407,49 @@ const Conversations = () => {
                     id="aiDraftPrompt"
                     value={draftPrompt}
                     onChange={(event) => setDraftPrompt(event.target.value)}
-                    placeholder="Optional: ask for a shorter reply, pricing clarification, or booking tone..."
+                    placeholder="E.g., ask to clarify pricing, be shorter, or offer custom times..."
                     rows={3}
+                    style={{ marginBottom: '0.5rem' }}
                   />
                   <button type="button" className="btn-secondary marketplace-btn full-width" onClick={generateDraft} disabled={isGeneratingDraft}>
-                    {isGeneratingDraft ? 'Generating...' : 'Generate AI draft'}
+                    {isGeneratingDraft ? 'Generating draft...' : 'Generate reply'}
                   </button>
                 </section>
 
                 {aiDraft?.suggested_reply ? (
                   <section className="ai-panel-section">
-                    <h3>Suggested reply</h3>
-                    <div className="ai-draft-box">{aiDraft.suggested_reply}</div>
+                    <h3>Generated Draft</h3>
+                    <div className="ai-draft-box" style={{ marginBottom: '0.75rem' }}>{aiDraft.suggested_reply}</div>
                     <div className="ai-action-row">
                       <button type="button" className="btn-secondary marketplace-btn" onClick={() => setComposer(aiDraft.suggested_reply)}>
-                        Edit in composer
+                        Insert draft
                       </button>
                       <button type="button" className="btn-primary marketplace-btn" onClick={sendAiReply} disabled={isSending}>
-                        Send AI reply
+                        Send draft
                       </button>
                     </div>
-                    {aiDraft.fallback_mode ? <p className="ai-fallback-note">Using local fallback while the AI service is unavailable.</p> : null}
+                    {aiDraft.fallback_mode ? <p className="ai-fallback-note">Using local fallback while the AI service is offline.</p> : null}
+                  </section>
+                ) : null}
+
+                {activeTranscript.lead ? (
+                  <section className="ai-panel-section">
+                    <h3>Request status</h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.5rem' }}>
+                      <button type="button" className="btn-secondary marketplace-btn full-width" style={{ textAlign: 'center' }} onClick={() => updateLeadStatus('contacted')}>
+                        Mark contacted
+                      </button>
+                      <button type="button" className="btn-secondary marketplace-btn full-width" style={{ textAlign: 'center' }} onClick={() => updateLeadStatus('booked')}>
+                        Mark booked
+                      </button>
+                    </div>
                   </section>
                 ) : null}
               </>
             ) : (
-              <p className="customer-muted-text">Select a thread to see receptionist analysis.</p>
+              <div className="ai-panel-section" style={{ borderBottom: 'none' }}>
+                <p className="customer-muted-text">Select a thread to see receptionist analysis.</p>
+              </div>
             )}
           </aside>
         </section>

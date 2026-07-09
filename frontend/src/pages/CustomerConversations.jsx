@@ -15,7 +15,7 @@ const messageLabel = (sender) => {
   const clean = String(sender || '').toLowerCase().trim();
   if (clean === 'customer') return 'You';
   if (clean === 'ai') return 'AI receptionist';
-  if (clean === 'owner') return 'Business owner';
+  if (clean === 'owner') return 'Owner/Team';
   return 'System';
 };
 
@@ -230,10 +230,24 @@ const CustomerConversations = () => {
                 <div className="customer-loading compact">Loading conversation...</div>
               ) : activeDetail ? (
                 <>
-                  <div className="customer-conversation-detail-header">
-                    <span>{activeDetail.business_name || 'Service business'}</span>
-                    <h2>{activeDetail.service_type || 'Conversation'}</h2>
-                    <p>Status: {activeDetail.status || 'open'}</p>
+                  <div className="customer-conversation-detail-header" style={{ position: 'relative' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <span>{activeDetail.business_name || 'Service business'}</span>
+                        <h2>{activeDetail.service_type || 'Conversation'}</h2>
+                        <p>Status: {activeDetail.status || 'open'}</p>
+                      </div>
+                      <div className="customer-portal-nav-links" style={{ display: 'flex', gap: '0.5rem' }}>
+                        <Link to="/customer/bookings" className="btn-secondary small-action" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', borderRadius: '4px' }}>
+                          Back to bookings
+                        </Link>
+                        {activeDetail.business_slug ? (
+                          <Link to={`/business/${activeDetail.business_slug}`} className="btn-primary small-action" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', borderRadius: '4px' }}>
+                            View business
+                          </Link>
+                        ) : null}
+                      </div>
+                    </div>
                   </div>
 
                   {activeDetail.lead ? (
