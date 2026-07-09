@@ -282,12 +282,14 @@ exports.getOwnerConversations = async (req, res) => {
       msgCountMap.set(cId, (msgCountMap.get(cId) || 0) + 1);
     });
 
-    console.log('⚡ [DEV LOG - getOwnerConversations]:', JSON.stringify({
-      authenticated_owner_id: req.user?.id || null,
-      resolved_business_id: business.id,
-      conversation_count: conversations.length,
-      message_counts: Object.fromEntries(msgCountMap)
-    }, null, 2));
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('⚡ [DEV LOG - getOwnerConversations]:', JSON.stringify({
+        authenticated_owner_id: req.user?.id || null,
+        resolved_business_id: business.id,
+        conversation_count: conversations.length,
+        message_counts: Object.fromEntries(msgCountMap)
+      }, null, 2));
+    }
 
     return res.json(sortByUpdated(conversations.map((conversation) =>
       enrichConversation(conversation, {

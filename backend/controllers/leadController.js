@@ -144,14 +144,16 @@ exports.getLeadsByBusiness = async (req, res) => {
 
       const enrichedLeads = await enrichLeadsWithConversationPreview(data || []);
 
-      console.log('⚡ [DEV LOG] GET /api/leads/:businessId (Supabase):', JSON.stringify({
-        authenticated_owner_user_id: userId,
-        resolved_owner_business_id: businessId,
-        owner_business_slug: businessSlug,
-        number_of_leads_found: enrichedLeads.length,
-        returned_lead_ids: enrichedLeads.map(l => l.id),
-        returned_lead_business_ids: enrichedLeads.map(l => l.business_id)
-      }, null, 2));
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('⚡ [DEV LOG] GET /api/leads/:businessId (Supabase):', JSON.stringify({
+          authenticated_owner_user_id: userId,
+          resolved_owner_business_id: businessId,
+          owner_business_slug: businessSlug,
+          number_of_leads_found: enrichedLeads.length,
+          returned_lead_ids: enrichedLeads.map(l => l.id),
+          returned_lead_business_ids: enrichedLeads.map(l => l.business_id)
+        }, null, 2));
+      }
 
       return res.json(enrichedLeads);
     } catch (err) {
@@ -164,14 +166,16 @@ exports.getLeadsByBusiness = async (req, res) => {
     .filter(l => l.business_id === businessId)
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
 
-  console.log('⚡ [DEV LOG] GET /api/leads/:businessId (Mock):', JSON.stringify({
-    authenticated_owner_user_id: userId,
-    resolved_owner_business_id: businessId,
-    owner_business_slug: businessSlug,
-    number_of_leads_found: leads.length,
-    returned_lead_ids: leads.map(l => l.id),
-    returned_lead_business_ids: leads.map(l => l.business_id)
-  }, null, 2));
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('⚡ [DEV LOG] GET /api/leads/:businessId (Mock):', JSON.stringify({
+      authenticated_owner_user_id: userId,
+      resolved_owner_business_id: businessId,
+      owner_business_slug: businessSlug,
+      number_of_leads_found: leads.length,
+      returned_lead_ids: leads.map(l => l.id),
+      returned_lead_business_ids: leads.map(l => l.business_id)
+    }, null, 2));
+  }
 
   res.json(leads);
 };

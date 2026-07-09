@@ -372,11 +372,13 @@ exports.getCustomerConversations = async (req, res) => {
       }
     }
 
-    console.log('⚡ [DEV LOG - getCustomerConversations]:', JSON.stringify({
-      authenticated_customer_email: req.user?.email || null,
-      conversation_count: records.conversations.length,
-      message_count: totalMessages
-    }, null, 2));
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('⚡ [DEV LOG - getCustomerConversations]:', JSON.stringify({
+        authenticated_customer_email: req.user?.email || null,
+        conversation_count: records.conversations.length,
+        message_count: totalMessages
+      }, null, 2));
+    }
 
     return res.json(records.conversations);
   } catch (err) {
@@ -1020,26 +1022,28 @@ exports.createEnquiry = async (req, res) => {
         firstMessage: initialMessage
       });
 
-      console.log('⚡ [DEV TRACE] createEnquiry:', JSON.stringify({
-        received_business_slug: business_slug || null,
-        received_business_id: business_id || null,
-        received_service_id: service_id || null,
-        received_service_slug: service_slug || null,
-        received_service_type: service_type || null,
-        resolved_business_id: targetBusiness.id,
-        resolved_service_id: finalServiceId,
-        created_lead_id: lead.id,
-        created_lead_business_id: lead.business_id,
-        created_lead_service_id: lead.service_id
-      }, null, 2));
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('⚡ [DEV TRACE] createEnquiry:', JSON.stringify({
+          received_business_slug: business_slug || null,
+          received_business_id: business_id || null,
+          received_service_id: service_id || null,
+          received_service_slug: service_slug || null,
+          received_service_type: service_type || null,
+          resolved_business_id: targetBusiness.id,
+          resolved_service_id: finalServiceId,
+          created_lead_id: lead.id,
+          created_lead_business_id: lead.business_id,
+          created_lead_service_id: lead.service_id
+        }, null, 2));
 
-      console.log('⚡ [DEV LOG - createEnquiry (Supabase)]:', JSON.stringify({
-        created_conversation_id: conv.id,
-        created_customer_message_id: initialMessage?.id || null,
-        ai_auto_reply_attempted: aiReceptionist ? true : false,
-        ai_mode: aiReceptionist?.fallback_mode ? 'fallback' : (aiReceptionist?.error ? 'error' : 'openai'),
-        created_ai_message_id: aiReceptionist?.message_id || null
-      }, null, 2));
+        console.log('⚡ [DEV LOG - createEnquiry (Supabase)]:', JSON.stringify({
+          created_conversation_id: conv.id,
+          created_customer_message_id: initialMessage?.id || null,
+          ai_auto_reply_attempted: aiReceptionist ? true : false,
+          ai_mode: aiReceptionist?.fallback_mode ? 'fallback' : (aiReceptionist?.error ? 'error' : 'openai'),
+          created_ai_message_id: aiReceptionist?.message_id || null
+        }, null, 2));
+      }
 
       return res.status(201).json({
         success: true,
@@ -1111,26 +1115,28 @@ exports.createEnquiry = async (req, res) => {
       firstMessage: newMessage
     });
 
-    console.log('⚡ [DEV TRACE] createEnquiry (Mock):', JSON.stringify({
-      received_business_slug: business_slug || null,
-      received_business_id: business_id || null,
-      received_service_id: service_id || null,
-      received_service_slug: service_slug || null,
-      received_service_type: service_type || null,
-      resolved_business_id: targetBusiness.id,
-      resolved_service_id: finalServiceId,
-      created_lead_id: newLeadId,
-      created_lead_business_id: newLead.business_id,
-      created_lead_service_id: newLead.service_id
-    }, null, 2));
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('⚡ [DEV TRACE] createEnquiry (Mock):', JSON.stringify({
+        received_business_slug: business_slug || null,
+        received_business_id: business_id || null,
+        received_service_id: service_id || null,
+        received_service_slug: service_slug || null,
+        received_service_type: service_type || null,
+        resolved_business_id: targetBusiness.id,
+        resolved_service_id: finalServiceId,
+        created_lead_id: newLeadId,
+        created_lead_business_id: newLead.business_id,
+        created_lead_service_id: newLead.service_id
+      }, null, 2));
 
-    console.log('⚡ [DEV LOG - createEnquiry (Mock)]:', JSON.stringify({
-      created_conversation_id: newConvId,
-      created_customer_message_id: newMessage?.id || null,
-      ai_auto_reply_attempted: aiReceptionist ? true : false,
-      ai_mode: aiReceptionist?.fallback_mode ? 'fallback' : (aiReceptionist?.error ? 'error' : 'openai'),
-      created_ai_message_id: aiReceptionist?.message_id || null
-    }, null, 2));
+      console.log('⚡ [DEV LOG - createEnquiry (Mock)]:', JSON.stringify({
+        created_conversation_id: newConvId,
+        created_customer_message_id: newMessage?.id || null,
+        ai_auto_reply_attempted: aiReceptionist ? true : false,
+        ai_mode: aiReceptionist?.fallback_mode ? 'fallback' : (aiReceptionist?.error ? 'error' : 'openai'),
+        created_ai_message_id: aiReceptionist?.message_id || null
+      }, null, 2));
+    }
 
     return res.status(201).json({
       success: true,
